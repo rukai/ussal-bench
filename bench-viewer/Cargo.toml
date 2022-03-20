@@ -1,0 +1,11 @@
+[package]
+name = "bench_viewer"
+version = "0.1.0"
+edition = "2021"
+default-run = "bench_viewer"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+eframe = { git = "https://github.com/rukai/egui", branch = "plot_allow_scroll" }
+web-sys = "0.3"
