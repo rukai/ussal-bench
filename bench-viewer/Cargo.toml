@@ -7,5 +7,5 @@ default-run = "bench_viewer"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-eframe = { git = "https://github.com/rukai/egui", branch = "plot_allow_scroll" }
+eframe = { git = "https://github.com/emilk/egui" }
 web-sys = "0.3"
