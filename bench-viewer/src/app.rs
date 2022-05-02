@@ -1,11 +1,11 @@
-use eframe::{egui, epi};
+use eframe::egui;
 
 pub struct TemplateApp {
     memory: Vec<u8>,
 }
 
 impl TemplateApp {
-    pub fn new(_cc: &epi::CreationContext<'_>, rom: Option<String>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, rom: Option<String>) -> Self {
         let mut memory = rom
             .map(|path| std::fs::read(path).unwrap())
             .unwrap_or_default();
@@ -14,9 +14,9 @@ impl TemplateApp {
     }
 }
 
-impl epi::App for TemplateApp {
+impl eframe::App for TemplateApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut epi::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
