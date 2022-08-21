@@ -16,13 +16,13 @@ impl TemplateApp {
 
 impl eframe::App for TemplateApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        frame.quit();
+                    if ui.button("Do Something").clicked() {
+                        todo!("Just leaving this here in case I want to add menu options later")
                     }
                 });
             });
@@ -114,12 +114,14 @@ fn plot(ui: &mut egui::Ui, name: &str) {
 
 fn circle() -> egui::plot::Line {
     let n = 512;
-    let circle = (0..=n).map(|i| {
-        let t = egui::remap(i as f64, 0.0..=(n as f64), 0.0..=std::f64::consts::TAU);
-        let r = 1.0;
-        egui::plot::Value::new(r * t.cos() as f64, r * t.sin() as f64)
-    });
-    egui::plot::Line::new(egui::plot::Values::from_values_iter(circle))
+    let circle: egui::plot::PlotPoints = (0..=n)
+        .map(|i| {
+            let t = egui::remap(i as f64, 0.0..=(n as f64), 0.0..=std::f64::consts::TAU);
+            let r = 1.0;
+            [r * t.cos() as f64, r * t.sin() as f64]
+        })
+        .collect();
+    egui::plot::Line::new(circle)
         .color(egui::Color32::from_rgb(100, 200, 100))
         .name("circle")
 }

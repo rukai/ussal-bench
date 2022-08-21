@@ -30,6 +30,8 @@ pub fn main() -> Result<(), eframe::wasm_bindgen::JsValue> {
 
     eframe::start_web(
         "the-id",
+        eframe::WebOptions::default(),
         Box::new(|cc| Box::new(crate::TemplateApp::new(cc, None))),
     )
+    .map(|_| ())
 }
