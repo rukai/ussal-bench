@@ -6,7 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct BenchRun {
     version: i64,
-    name: String,
+    pub name: String,
     pub results: Vec<BenchResult>,
 }
 
@@ -21,7 +21,7 @@ pub struct BenchResult {
 // We should be able to compress the result with gzip or something to save a bunch of space.
 #[derive(Serialize, Deserialize)]
 pub struct BenchMeasurement {
-    pub measurement_name: String,
+    pub name: String,
     pub unit: String,
     pub value: f32,
 }
@@ -38,6 +38,10 @@ impl BenchRun {
     pub fn load(name: &str) -> Self {
         let name = format!("{}.cbor", name);
         serde_cbor::from_slice(&std::fs::read(name).unwrap()).unwrap()
+    }
+
+    pub fn load_from_cbor(bytes: &[u8]) -> Self {
+        serde_cbor::from_slice(bytes).unwrap()
     }
 
     pub fn save(&self) {

@@ -2,26 +2,28 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 mod app;
-pub use app::TemplateApp;
+pub use app::App;
+
+use ussal_shared::BenchRun;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let rom_path = args.get(1).cloned();
-    let native_options = eframe::NativeOptions::default();
+    let bench_run_path = args.get(1).map(|x| x.as_ref()).unwrap_or("name");
+    let bench_run = BenchRun::load(bench_run_path);
     eframe::run_native(
         "bench viewer",
-        native_options,
-        Box::new(|cc| Box::new(crate::TemplateApp::new(cc, rom_path))),
+        eframe::NativeOptions::default(),
+        Box::new(|cc| Box::new(crate::App::new(cc, bench_run))),
     );
 }
 
 #[cfg(target_arch = "wasm32")]
 pub fn main() -> Result<(), eframe::wasm_bindgen::JsValue> {
-    // Make sure panics are logged using `console.error`.
-
     use wasm_bindgen::JsCast;
     use web_sys::HtmlElement;
+
+    // Make sure panics are logged using `console.error`.
     console_error_panic_hook::set_once();
 
     // Redirect tracing to console.log and friends:
@@ -46,10 +48,13 @@ pub fn main() -> Result<(), eframe::wasm_bindgen::JsValue> {
         .style()
         .set_css_text("margin: 0; height: 100%; width: 100%");
 
+    let raw_cbor = include_bytes!("../../name.cbor");
+    let bench_run = BenchRun::load_from_cbor(raw_cbor);
+
     eframe::start_web(
         "the-id",
         eframe::WebOptions::default(),
-        Box::new(|cc| Box::new(crate::TemplateApp::new(cc, None))),
+        Box::new(|cc| Box::new(crate::App::new(cc, bench_run))),
     )
     .map(|_| ())
 }

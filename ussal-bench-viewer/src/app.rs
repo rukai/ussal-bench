@@ -1,20 +1,17 @@
 use eframe::egui;
+use ussal_shared::{BenchResult, BenchRun};
 
-pub struct TemplateApp {
-    memory: Vec<u8>,
+pub struct App {
+    bench_run: BenchRun,
 }
 
-impl TemplateApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>, rom: Option<String>) -> Self {
-        let mut memory = rom
-            .map(|path| std::fs::read(path).unwrap())
-            .unwrap_or_default();
-        memory.resize(0x10000, 0);
-        Self { memory }
+impl App {
+    pub fn new(_cc: &eframe::CreationContext<'_>, bench_run: BenchRun) -> Self {
+        Self { bench_run }
     }
 }
 
-impl eframe::App for TemplateApp {
+impl eframe::App for App {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -30,24 +27,6 @@ impl eframe::App for TemplateApp {
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("something");
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                for (i, window) in self.memory.chunks(8).enumerate() {
-                    ui.horizontal(|ui| {
-                        ui.monospace(format!(
-                            "0x{:04x}: {:02x}{:02x}{:02x}{:02x} {:02x}{:02x}{:02x}{:02x}",
-                            i * 8,
-                            window[0],
-                            window[1],
-                            window[2],
-                            window[3],
-                            window[4],
-                            window[5],
-                            window[6],
-                            window[7]
-                        ));
-                    });
-                }
-            });
         });
 
         egui::SidePanel::right("right_panel").show(ctx, |ui| {
@@ -59,33 +38,13 @@ impl eframe::App for TemplateApp {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-
-            ui.heading("eframe template");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
-            egui::warn_if_debug_build(ui);
-
+            ui.heading(&self.bench_run.name);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    plot(ui, "bench1");
-                    plot(ui, "bench2");
-                    plot(ui, "bench3");
-                    plot(ui, "bench4");
-                    plot(ui, "bench5");
-                    plot(ui, "bench6");
-                    plot(ui, "bench7");
-                    plot(ui, "bench8");
-                    plot(ui, "bench9");
-                    plot(ui, "bench10");
-                    plot(ui, "bench11");
-                    plot(ui, "bench12");
-                    plot(ui, "bench13");
-                    plot(ui, "bench14");
-                    plot(ui, "bench15");
+                    for result in &self.bench_run.results {
+                        plot_result(ui, result);
+                    }
+                    plot(ui, "circle_plot");
                 })
             });
 
@@ -124,4 +83,25 @@ fn circle() -> egui::plot::Line {
     egui::plot::Line::new(circle)
         .color(egui::Color32::from_rgb(100, 200, 100))
         .name("circle")
+}
+
+fn plot_result(ui: &mut egui::Ui, result: &BenchResult) {
+    use crate::app::egui::plot::{Legend, Plot};
+    // TODO: gaurantee uniqueness of result.name
+    let plot = Plot::new(&result.name)
+        .legend(Legend::default())
+        .width(500.0)
+        .height(250.0)
+        .allow_scroll(false);
+
+    plot.show(ui, |plot_ui| {
+        for measurement in &result.measurements {
+            let line = egui::plot::PlotPoints::new(vec![[0.0, measurement.value as f64]]);
+            plot_ui.line(
+                egui::plot::Line::new(line)
+                    .color(egui::Color32::from_rgb(100, 200, 100))
+                    .name(&measurement.name),
+            )
+        }
+    });
 }
