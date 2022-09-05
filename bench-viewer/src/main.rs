@@ -18,7 +18,17 @@ fn main() {
 
 #[cfg(target_arch = "wasm32")]
 pub fn main() -> Result<(), eframe::wasm_bindgen::JsValue> {
+    // Make sure panics are logged using `console.error`.
+
+    use wasm_bindgen::JsCast;
+    use web_sys::HtmlElement;
+    console_error_panic_hook::set_once();
+
+    // Redirect tracing to console.log and friends:
+    tracing_wasm::set_as_global_default();
+
     let document = web_sys::window().unwrap().document().unwrap();
+
     let body = document.body().unwrap();
 
     // TODO: Maybe we could upstream this boilerplate into eframe
@@ -26,7 +36,15 @@ pub fn main() -> Result<(), eframe::wasm_bindgen::JsValue> {
     canvas.set_id("the-id");
     body.append_child(&canvas)
         .expect("Append canvas to HTML body");
-    body.style().set_css_text("margin: 0;");
+    body.style()
+        .set_css_text("margin: 0; height: 100%; width: 100%");
+    document
+        .document_element()
+        .unwrap()
+        .dyn_ref::<HtmlElement>()
+        .unwrap()
+        .style()
+        .set_css_text("margin: 0; height: 100%; width: 100%");
 
     eframe::start_web(
         "the-id",
