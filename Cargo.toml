@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "bench-viewer",
+    "ussal-bench-viewer",
+    "ussal-shared",
+    "ussal-bencher",
     "run-wasm",
 ]

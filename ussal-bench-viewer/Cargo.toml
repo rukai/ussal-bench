@@ -1,12 +1,13 @@
 [package]
-name = "bench_viewer"
+name = "ussal_bench_viewer"
 version = "0.1.0"
 edition = "2021"
-default-run = "bench_viewer"
+default-run = "ussal_bench_viewer"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ussal_shared = { path = "../ussal-shared" }
 eframe = "0.19"
 web-sys = "0.3"
 
