@@ -1698,18 +1698,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ussal_bench_viewer"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "eframe",
- "tracing-wasm",
- "ussal_shared",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
 name = "ussal_bencher"
 version = "0.1.0"
 dependencies = [
@@ -1723,6 +1711,18 @@ dependencies = [
  "serde",
  "serde_cbor",
  "serde_derive",
+]
+
+[[package]]
+name = "ussal_viewer"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "eframe",
+ "tracing-wasm",
+ "ussal_shared",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

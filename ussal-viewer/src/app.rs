@@ -1,4 +1,5 @@
-use eframe::egui;
+use crate::app::egui::plot::{Legend, Plot};
+use eframe::egui::{self};
 use ussal_shared::{BenchResult, BenchRun};
 
 pub struct App {
@@ -41,8 +42,8 @@ impl eframe::App for App {
             ui.heading(&self.bench_run.name);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    for result in &self.bench_run.results {
-                        plot_result(ui, result);
+                    for (i, result) in self.bench_run.results.iter().enumerate() {
+                        plot_result(ui, result, i as i32);
                     }
                     plot(ui, "circle_plot");
                 })
@@ -60,7 +61,6 @@ impl eframe::App for App {
 }
 
 fn plot(ui: &mut egui::Ui, name: &str) {
-    use crate::app::egui::plot::{Legend, Plot};
     let plot = Plot::new(name)
         .legend(Legend::default())
         .width(500.0)
@@ -85,10 +85,11 @@ fn circle() -> egui::plot::Line {
         .name("circle")
 }
 
-fn plot_result(ui: &mut egui::Ui, result: &BenchResult) {
-    use crate::app::egui::plot::{Legend, Plot};
-    // TODO: gaurantee uniqueness of result.name
-    let plot = Plot::new(&result.name)
+fn plot_result(ui: &mut egui::Ui, result: &BenchResult, id: i32) {
+    // TODO: couldnt get this playing nicely, lets just directly implement the desired legend header directly into egui
+    //ui.label(&result.name);
+
+    let plot = Plot::new(id)
         .legend(Legend::default())
         .width(500.0)
         .height(250.0)
