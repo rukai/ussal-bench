@@ -3,9 +3,22 @@
 
 use ussal_shared::{BenchMeasurement, BenchResult, BenchRun};
 
+/// `cargo bench`
+/// flags:
+/// --ci        - writes new file to `bench_ci_history/benchn.cbor`, combine all of `bench_logs/` into `bench_ci_history_combined.cbor`
+/// --file-name - write output to specified filename
+/// by default overwrites bench.cbor in cwd
+///
+///
+/// `cargo benchcompare`
+/// either an xtask or an always backwards compatible `cargo-benchcompare`.
+/// I have to be backwards compatible anyway for CI purposes, so may as well just do a `cargo-benchcompare`
+/// usage: `cargo benchcompare $file1.cbor $file2.cbor`
+/// compares changes between $file1.cbor and $file2.cbor
+
 fn main() {
     let results = BenchRun::new(
-        "name".to_owned(),
+        "Ussal Example Benchmarks".to_owned(),
         vec![
             BenchResult {
                 name: "CoolBench".to_owned(),
@@ -39,5 +52,5 @@ fn main() {
             },
         ],
     );
-    results.save();
+    results.save("name.cbor");
 }

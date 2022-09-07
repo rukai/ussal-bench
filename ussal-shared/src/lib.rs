@@ -36,7 +36,6 @@ impl BenchRun {
     }
 
     pub fn load(name: &str) -> Self {
-        let name = format!("{}.cbor", name);
         serde_cbor::from_slice(&std::fs::read(name).unwrap()).unwrap()
     }
 
@@ -44,8 +43,7 @@ impl BenchRun {
         serde_cbor::from_slice(bytes).unwrap()
     }
 
-    pub fn save(&self) {
-        let name = format!("{}.cbor", self.name);
+    pub fn save(&self, name: &str) {
         std::fs::write(name, serde_cbor::to_vec(self).unwrap()).unwrap();
     }
 }
