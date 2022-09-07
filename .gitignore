@@ -1,2 +1,3 @@
 /target
-name.cbor
+bench_ci_history
+bench_ci_history_combined.cbor
