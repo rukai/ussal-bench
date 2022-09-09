@@ -8,9 +8,10 @@ use ussal_shared::{BenchMeasurement, BenchResult, BenchRun};
 /// --ci
 ///     1. CI infrastructure runs: `git fetch origin/gh-pages; git checkout origin/gh-pages -- bench_ci_web_root`
 ///     2. CI infrastructure runs: `cargo bench --ci` which will:
-///         1. writes new file to `bench_ci_web_root/history/benchn.cbor` # TODO: how do I persist this folder?
-///         2. combine all of `bench_ci_web_root/history/` into `bench_ci_web_root/benches.cbor`
-///         3. Generates viewer html + wasm into `bench_ci_web_root/`
+///         1. read existing state from bench_ci_web_root/bench_history.cbor
+///         2. insert new run to state
+///         3. write new state to bench_ci_web_root/bench_history.cbor
+///         4. Generates viewer html + wasm into `bench_ci_web_root/`
 ///     3. CI infrastructure then needs to:
 ///        on main branch checkin: copy bench_ci_web_root to gh-pages/bench_ci_web_root
 ///        on PR branch received: copy bench_ci_web_root to gh-pages/repo_name/branch_name
@@ -62,22 +63,16 @@ fn main() {
             },
         ],
     );
-    // TODO: OH I should just name with iso date lol
     // TODO: handle unwraps
-    std::fs::create_dir_all("bench_ci_history").unwrap();
-    let max = std::fs::read_dir("bench_ci_history")
-        .unwrap()
-        .filter_map(|dir_entry| {
-            let name = dir_entry.unwrap().file_name();
-            let name = name.to_str().unwrap();
-            let number_portion = name.strip_prefix("bench")?.strip_suffix(".cbor")?;
-            number_portion.parse().ok()
-        })
-        .max()
-        .unwrap_or(0);
-    results.save(&format!("bench_ci_history/bench{}.cbor", max + 1));
+    std::fs::create_dir_all("bench_ci_web_root").unwrap();
+    results.save("bench_ci_web_root/bench_history.cbor");
+    results.save("bench.cbor");
 
-    // TODO: huh, I wonder if it would be easier to just read, process and then write the bench_ci_history_combined.cbor file directly without storing all the intermediate files.
-    // Would be cheaper on disk space...
-    // I probably could just do that considering I have --ci flag
+    // TODO: build viewer as wasm if it exists
+    //       else fallback to undecided method (either: pull from github release, include_bytes it, download from crates.io and build from source)
+
+    // TODO: include_bytes!("viewer.wasm");
+    // TODO: how to generate viewer.wasm before publish??
+
+    std::fs::write("bench_ci_web_root/index.html", include_bytes!("index.html")).unwrap();
 }

@@ -9,7 +9,7 @@ use ussal_shared::BenchRun;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let bench_run_path = args.get(1).map(|x| x.as_ref()).unwrap_or("name");
+    let bench_run_path = args.get(1).map(|x| x.as_ref()).unwrap_or("bench.cbor");
     let bench_run = BenchRun::load(bench_run_path);
     eframe::run_native(
         "bench viewer",
@@ -48,7 +48,7 @@ pub fn main() -> Result<(), eframe::wasm_bindgen::JsValue> {
         .style()
         .set_css_text("margin: 0; height: 100%; width: 100%");
 
-    let raw_cbor = include_bytes!("../../name.cbor");
+    let raw_cbor = include_bytes!("../../bench.cbor");
     let bench_run = BenchRun::load_from_cbor(raw_cbor);
 
     eframe::start_web(
