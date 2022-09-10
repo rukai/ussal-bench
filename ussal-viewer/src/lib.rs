@@ -1,5 +1,5 @@
-use crate::app::egui::plot::{Legend, Plot};
 use eframe::egui::{self};
+use egui::plot::{Legend, Plot};
 use ussal_shared::{BenchResult, BenchRun};
 
 pub struct App {

@@ -1,6 +1,8 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 
+mod gen_web;
+
 use ussal_shared::{BenchMeasurement, BenchResult, BenchRun};
 
 /// `cargo bench`
@@ -63,16 +65,10 @@ fn main() {
             },
         ],
     );
+
     // TODO: handle unwraps
-    std::fs::create_dir_all("bench_ci_web_root").unwrap();
+    gen_web::generate_web();
     results.save("bench_ci_web_root/bench_history.cbor");
+
     results.save("bench.cbor");
-
-    // TODO: build viewer as wasm if it exists
-    //       else fallback to undecided method (either: pull from github release, include_bytes it, download from crates.io and build from source)
-
-    // TODO: include_bytes!("viewer.wasm");
-    // TODO: how to generate viewer.wasm before publish??
-
-    std::fs::write("bench_ci_web_root/index.html", include_bytes!("index.html")).unwrap();
 }
