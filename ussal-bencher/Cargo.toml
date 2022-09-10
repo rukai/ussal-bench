@@ -10,3 +10,4 @@ default-run = "ussal_bencher"
 ussal_shared = { path = "../ussal-shared" }
 subprocess = "0.2.7"
 wasm-bindgen-cli-support = "0.2.78"
+log = "0.4"

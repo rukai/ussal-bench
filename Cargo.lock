@@ -1711,6 +1711,7 @@ dependencies = [
 name = "ussal_bencher"
 version = "0.1.0"
 dependencies = [
+ "log",
  "subprocess",
  "ussal_shared",
  "wasm-bindgen-cli-support",

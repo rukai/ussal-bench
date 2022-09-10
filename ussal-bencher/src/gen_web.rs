@@ -1,3 +1,4 @@
+use log::error;
 use subprocess::{Exec, Redirection};
 
 pub fn generate_web() {
@@ -23,11 +24,15 @@ pub fn generate_web() {
         .unwrap();
 
     let wasm_file_name = "ussal_viewer_web_bg.wasm";
-    run_command_in_dir(
-        "wasm-opt",
-        &["-Oz", "-o", wasm_file_name, wasm_file_name],
-        "ussal-viewer-web/target/generated/",
-    );
+    if Exec::cmd("wasm-opt").args(&["--help"]).capture().is_ok() {
+        run_command_in_dir(
+            "wasm-opt",
+            &["-Oz", "-o", wasm_file_name, wasm_file_name],
+            "ussal-viewer-web/target/generated/",
+        );
+    } else {
+        error!("Skipping wasm-opt because not installed")
+    }
     std::fs::copy(
         "ussal-viewer-web/target/generated/ussal_viewer_web_bg.wasm",
         "bench_ci_web_root/ussal_viewer_web_bg.wasm",
