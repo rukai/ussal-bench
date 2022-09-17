@@ -1,4 +1,4 @@
 /target
 /ussal-bencher/ussal-viewer-web/target
-/bench_ci_web_root
-/bench.cbor
+ussal-bencher/bench_ci_web_root
+ussal-bencher/bench.cbor

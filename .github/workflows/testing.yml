@@ -65,3 +65,10 @@ jobs:
       run: |
         cd ussal-bencher
         cargo run ${{ matrix.cargo_profile }}
+    - name: Ensure that tests did not create or modify any files that arent .gitignore'd
+      shell: bash
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          git status
+          exit 1
+        fi

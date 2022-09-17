@@ -59,8 +59,8 @@ jobs:
       id: setup_pages
     - name: Get initial page state
       run: |
-        mkdir bench_ci_web_root
-        cd bench_ci_web_root
+        mkdir -p ussal-bencher/bench_ci_web_root
+        cd ussal-bencher/bench_ci_web_root
         wget ${{ steps.setup_pages.outputs.base_url }}/bench_history.cbor
       continue-on-error: true
     - name: Generate pages
