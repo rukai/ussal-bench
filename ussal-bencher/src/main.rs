@@ -3,7 +3,8 @@
 
 mod gen_web;
 
-use ussal_shared::{BenchMeasurement, BenchResult, BenchRun};
+use std::collections::HashMap;
+use ussal_shared::{Bench, BenchArchive, BenchMeasurement};
 
 /// `cargo bench`
 /// flags:
@@ -29,38 +30,56 @@ use ussal_shared::{BenchMeasurement, BenchResult, BenchRun};
 /// usage: `cargo benchcompare $file1.cbor $file2.cbor`
 /// compares changes between $file1.cbor and $file2.cbor
 
+/// TODO:
+/// current thoughts:
+/// combine --ci and --file-name:
+/// output format is combinable with other outputs.
+/// output format embeds OS string
+///
+/// This way we can parallelize the workload across multiple workflows
+///
+/// If we have a combiner workflow copied in by default it should be easier to introduce a new parallel workflow
+///
+/// need to think through this approach.
+
 fn main() {
-    let results = BenchRun::new(
+    let results = BenchArchive::new(
         "Ussal Example Benchmarks".to_owned(),
         vec![
-            BenchResult {
+            Bench {
                 name: "CoolBench".to_owned(),
+                keys: HashMap::from([("type".to_owned(), "instructions".to_owned())]),
                 measurements: vec![
-                    BenchMeasurement {
-                        name: "instructions".to_owned(),
-                        unit: "I".to_owned(),
-                        value: 1.0,
-                    },
-                    BenchMeasurement {
-                        name: "walltime".to_owned(),
-                        unit: "S".to_owned(),
-                        value: 1.2,
-                    },
+                    BenchMeasurement { value: 1.0 },
+                    BenchMeasurement { value: 1.2 },
+                    BenchMeasurement { value: 1.3 },
+                    BenchMeasurement { value: 1.7 },
+                    BenchMeasurement { value: 1.5 },
                 ],
             },
-            BenchResult {
-                name: "SadBench".to_owned(),
+            Bench {
+                name: "CoolBench".to_owned(),
+                keys: HashMap::from([("type".to_owned(), "walltime".to_owned())]),
                 measurements: vec![
-                    BenchMeasurement {
-                        name: "instructions".to_owned(),
-                        unit: "I".to_owned(),
-                        value: 10000.0,
-                    },
-                    BenchMeasurement {
-                        name: "walltime".to_owned(),
-                        unit: "S".to_owned(),
-                        value: 10.0,
-                    },
+                    BenchMeasurement { value: 1.0 },
+                    BenchMeasurement { value: 0.8 },
+                ],
+            },
+            Bench {
+                name: "SadBench".to_owned(),
+                keys: HashMap::from([("type".to_owned(), "instructions".to_owned())]),
+                measurements: vec![
+                    BenchMeasurement { value: 10000.0 },
+                    BenchMeasurement { value: 10. },
+                ],
+            },
+            Bench {
+                name: "SadBench".to_owned(),
+                keys: HashMap::from([("type".to_owned(), "walltime".to_owned())]),
+                measurements: vec![
+                    BenchMeasurement { value: 10.0 },
+                    BenchMeasurement { value: 10.0 },
+                    BenchMeasurement { value: 15. },
                 ],
             },
         ],

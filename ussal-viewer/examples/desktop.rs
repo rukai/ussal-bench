@@ -1,13 +1,13 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 
-use ussal_shared::BenchRun;
+use ussal_shared::BenchArchive;
 use ussal_viewer::App;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let bench_run_path = args.get(1).map(|x| x.as_ref()).unwrap_or("bench.cbor");
-    let bench_run = BenchRun::load(bench_run_path);
+    let bench_run = BenchArchive::load(bench_run_path);
     eframe::run_native(
         "bench viewer",
         eframe::NativeOptions::default(),

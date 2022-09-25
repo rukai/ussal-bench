@@ -2,36 +2,41 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
-pub struct BenchRun {
+pub struct BenchArchive {
     version: i64,
     pub name: String,
-    pub results: Vec<BenchResult>,
+    pub benches: Vec<Bench>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct BenchResult {
+pub struct Bench {
     pub name: String,
+    // A set of keys used when combining measurements and for filtering
+    // A hashmap is used rather than hardcoded fields because I expect all of them to be handled in the same way.
+    // By default we will include:
+    // * type -> instructions|walltime possibly include the unit in brackets on the walltime
+    // * os -> macos|linux|windows
+    // * arch -> x86|arm64
+    // Users will also be able to overwrite these defaults and add their own
+    pub keys: HashMap<String, String>,
     pub measurements: Vec<BenchMeasurement>,
 }
 
-// Given that the programmer is free to change the bench at any time we should just do our best to display what we have.
-// That means always including the metadata for each measurement.
-// We should be able to compress the result with gzip or something to save a bunch of space.
 #[derive(Serialize, Deserialize)]
 pub struct BenchMeasurement {
-    pub name: String,
-    pub unit: String,
+    // TODO: build hash and/or datetime?
     pub value: f32,
 }
 
-impl BenchRun {
-    pub fn new(name: String, results: Vec<BenchResult>) -> Self {
-        BenchRun {
+impl BenchArchive {
+    pub fn new(name: String, benches: Vec<Bench>) -> Self {
+        BenchArchive {
             version: 0,
             name,
-            results,
+            benches,
         }
     }
 

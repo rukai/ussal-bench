@@ -1,14 +1,14 @@
 use eframe::egui::{self};
 use egui::plot::{Legend, Plot};
-use ussal_shared::{BenchResult, BenchRun};
+use ussal_shared::{Bench, BenchArchive};
 
 pub struct App {
-    bench_run: BenchRun,
+    archive: BenchArchive,
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext<'_>, bench_run: BenchRun) -> Self {
-        Self { bench_run }
+    pub fn new(_cc: &eframe::CreationContext<'_>, archive: BenchArchive) -> Self {
+        Self { archive }
     }
 }
 
@@ -39,13 +39,12 @@ impl eframe::App for App {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(&self.bench_run.name);
+            ui.heading(&self.archive.name);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    for (i, result) in self.bench_run.results.iter().enumerate() {
-                        plot_result(ui, result, i as i32);
+                    for (i, result) in self.archive.benches.iter().enumerate() {
+                        plot_bench(ui, result, i as i32);
                     }
-                    plot(ui, "circle_plot");
                 })
             });
 
@@ -53,39 +52,14 @@ impl eframe::App for App {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 0.0;
                     ui.label("powered by ");
-                    ui.hyperlink_to("bench_viewer", "https://github.com/rukai/bench_viewer");
+                    ui.hyperlink_to("ussal-bench", "https://github.com/rukai/ussal-bench");
                 });
             });
         });
     }
 }
 
-fn plot(ui: &mut egui::Ui, name: &str) {
-    let plot = Plot::new(name)
-        .legend(Legend::default())
-        .width(500.0)
-        .height(250.0)
-        .allow_scroll(false);
-    plot.show(ui, |plot_ui| {
-        plot_ui.line(circle());
-    });
-}
-
-fn circle() -> egui::plot::Line {
-    let n = 512;
-    let circle: egui::plot::PlotPoints = (0..=n)
-        .map(|i| {
-            let t = egui::remap(i as f64, 0.0..=(n as f64), 0.0..=std::f64::consts::TAU);
-            let r = 1.0;
-            [r * t.cos() as f64, r * t.sin() as f64]
-        })
-        .collect();
-    egui::plot::Line::new(circle)
-        .color(egui::Color32::from_rgb(100, 200, 100))
-        .name("circle")
-}
-
-fn plot_result(ui: &mut egui::Ui, result: &BenchResult, id: i32) {
+fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32) {
     // TODO: couldnt get this playing nicely, lets just directly implement the desired legend header directly into egui
     //ui.label(&result.name);
 
@@ -96,13 +70,18 @@ fn plot_result(ui: &mut egui::Ui, result: &BenchResult, id: i32) {
         .allow_scroll(false);
 
     plot.show(ui, |plot_ui| {
-        for measurement in &result.measurements {
-            let line = egui::plot::PlotPoints::new(vec![[0.0, measurement.value as f64]]);
-            plot_ui.line(
-                egui::plot::Line::new(line)
-                    .color(egui::Color32::from_rgb(100, 200, 100))
-                    .name(&measurement.name),
-            )
-        }
+        let line = egui::plot::PlotPoints::new(
+            bench
+                .measurements
+                .iter()
+                .enumerate()
+                .map(|(i, x)| [i as f64, x.value as f64])
+                .collect(),
+        );
+        plot_ui.line(
+            egui::plot::Line::new(line)
+                .color(egui::Color32::from_rgb(100, 200, 100))
+                .name(&bench.keys.get("type").unwrap()),
+        );
     });
 }

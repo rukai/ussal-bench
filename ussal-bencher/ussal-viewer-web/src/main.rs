@@ -3,7 +3,7 @@
 
 use js_sys::Uint8Array;
 use ussal_viewer::App;
-use ussal_shared::BenchRun;
+use ussal_shared::BenchArchive;
 use web_sys::{Request, RequestInit, RequestMode, Response, HtmlElement};
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
@@ -39,12 +39,12 @@ async fn run() {
         .set_css_text("margin: 0; height: 100%; width: 100%");
 
     let raw_cbor = get_bench_history().await;
-    let bench_run = BenchRun::load_from_cbor(&raw_cbor);
+    let archive = BenchArchive::load_from_cbor(&raw_cbor);
 
     eframe::start_web(
         "the-id",
         eframe::WebOptions::default(),
-        Box::new(|cc| Box::new(crate::App::new(cc, bench_run))),
+        Box::new(|cc| Box::new(crate::App::new(cc, archive))),
     )
     .unwrap();
 }
