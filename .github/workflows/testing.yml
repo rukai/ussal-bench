@@ -20,7 +20,7 @@ jobs:
       matrix:
         include:
           # By default only linux has a release job.
-          # This is to keep within the 5GB cache limit as rust can use a lot of space!
+          # This is to keep within the 10GB cache limit as rust can use a lot of space!
           # There are also more limits here but I don't think there is much risk of hitting them: https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration#usage-limits
           #
           # If you don't use much of the cache feel free to add more release jobs.
@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
     - uses: actions/checkout@v2
-    - uses: Swatinem/rust-cache@v1
+    - uses: Swatinem/rust-cache@v2
       with:
         # rust-cache already handles all the sane defaults for caching rust builds.
         # However because we are running separate debug/release builds in parallel,

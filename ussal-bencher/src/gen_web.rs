@@ -6,7 +6,7 @@ pub fn generate_web() {
     std::fs::write("bench_ci_web_root/index.html", include_bytes!("index.html")).unwrap();
 
     // TODO: in production builds we should fetch the wasm from a github release instead of building locally.
-    //       It will be way faster and have less non-cargo dependencies.
+    //       It will be: way faster, less non-cargo dependencies and avoid wasm-bindgen version mismatches.
     //
     //       For now this works fine though and has the advantage of being easier to test / more reproducible
 
@@ -19,7 +19,7 @@ pub fn generate_web() {
         .web(true)
         .unwrap()
         .omit_default_module_path(false)
-        .input_path(&wasm_path)
+        .input_path(wasm_path)
         .generate(destination_dir)
         .unwrap();
 
