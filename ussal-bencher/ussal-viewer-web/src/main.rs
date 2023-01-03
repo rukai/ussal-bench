@@ -2,11 +2,11 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 use js_sys::Uint8Array;
-use ussal_viewer::App;
 use ussal_shared::BenchArchive;
-use web_sys::{Request, RequestInit, RequestMode, Response, HtmlElement};
+use ussal_viewer::App;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
+use web_sys::{HtmlElement, Request, RequestInit, RequestMode, Response};
 
 pub fn main() {
     wasm_bindgen_futures::spawn_local(run());
@@ -46,6 +46,7 @@ async fn run() {
         eframe::WebOptions::default(),
         Box::new(|cc| Box::new(crate::App::new(cc, archive))),
     )
+    .await
     .unwrap();
 }
 

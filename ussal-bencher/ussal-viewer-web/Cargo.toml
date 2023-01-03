@@ -10,7 +10,7 @@ ussal_shared = { path = "../../ussal-shared" }
 ussal_viewer = { path = "../../ussal-viewer" }
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3.55"
-eframe = "0.19"
+eframe = "0.20"
 
 [dependencies.web-sys]
 version = "0.3.4"
