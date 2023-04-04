@@ -12,5 +12,6 @@ fn main() {
         "bench viewer",
         eframe::NativeOptions::default(),
         Box::new(|cc| Box::new(crate::App::new(cc, bench_run))),
-    );
+    )
+    .unwrap();
 }
