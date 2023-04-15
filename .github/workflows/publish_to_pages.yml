@@ -23,12 +23,6 @@ jobs:
     strategy:
       matrix:
         include:
-          # By default only linux has a release job.
-          # This is to keep within the 5GB cache limit as rust can use a lot of space!
-          # There are also more limits here but I don't think there is much risk of hitting them: https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration#usage-limits
-          #
-          # If you don't use much of the cache feel free to add more release jobs.
-          # If you do hit the cache and there are jobs that are not important for your project remove them or disable caching for them.
           - name: Linux Publish
             runner: ubuntu-latest
 
@@ -67,7 +61,13 @@ jobs:
     - name: Generate pages
       run: |
         cd ussal-bencher
-        cargo run --release
+        # The USSAL_TOKEN is unique per user and can be revoked individually
+        # We then internally use TLS/QUIC (e.g. with letsencrypt) to encrypt and authenticate the server.
+        # As a follow up we need to provide a way to use an IP without DNS, this can be done by:
+        #      * server uses a self-signed cert
+        #      * client includes the self-signing CA in the below command (doesnt need to be secret)
+        #      * the client disables hostname verification in case the IP is not static, this is fine because the CA has only signed a single cert, so its unambigious which cert we are connecting to.
+        cargo run --release -- 172.31.7.167 ${{ secrets.USSAL_TOKEN }}
     - name: Upload pages
       uses: actions/upload-pages-artifact@v1
       with:

@@ -41,6 +41,9 @@ use ussal_shared::{Bench, BenchArchive, BenchMeasurement};
 /// If we have a combiner workflow copied in by default it should be easier to introduce a new parallel workflow
 ///
 /// need to think through this approach.
+///
+/// TODO:
+/// Need to request QUIC connections. how do we split this from the CLI sketched above?
 
 fn main() {
     let results = BenchArchive::new(
