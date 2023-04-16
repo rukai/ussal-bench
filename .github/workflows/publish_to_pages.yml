@@ -61,13 +61,17 @@ jobs:
     - name: Generate pages
       run: |
         cd ussal-bencher
-        # The USSAL_TOKEN is unique per user and can be revoked individually
-        # We then internally use TLS/QUIC (e.g. with letsencrypt) to encrypt and authenticate the server.
-        # As a follow up we need to provide a way to use an IP without DNS, this can be done by:
-        #      * server uses a self-signed cert
-        #      * client includes the self-signing CA in the below command (doesnt need to be secret)
-        #      * the client disables hostname verification in case the IP is not static, this is fine because the CA has only signed a single cert, so its unambigious which cert we are connecting to.
-        cargo run --release -- 172.31.7.167 ${{ secrets.USSAL_TOKEN }}
+        cargo run --release
+    #- name: Run benches
+    #  run: |
+    #    cd ussal-bencher
+    #    # The USSAL_TOKEN is unique per user and can be revoked individually
+    #    # We then internally use TLS/QUIC (e.g. with letsencrypt) to encrypt and authenticate the server.
+    #    # As a follow up we need to provide a way to use an IP without DNS, this can be done by:
+    #    #      * server uses a self-signed cert
+    #    #      * client includes the self-signing CA in the below command (doesnt need to be secret)
+    #    #      * the client disables hostname verification in case the IP is not static, this is fine because the CA has only signed a single cert, so its unambigious which cert we are connecting to.
+    #    cargo run --release -- 172.31.7.167 ${{ secrets.USSAL_TOKEN }}
     - name: Upload pages
       uses: actions/upload-pages-artifact@v1
       with:
