@@ -1,7 +1,9 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 
-use serde_derive::{Deserialize, Serialize};
+pub mod runner_protocol;
+
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]

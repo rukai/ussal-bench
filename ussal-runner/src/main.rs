@@ -1,10 +1,12 @@
-use axum::{routing::get, Router};
+use axum::routing::get;
+use axum::Router;
 use clap::Parser;
 use config::OrchestratorConfig;
 use std::net::{Ipv6Addr, SocketAddr};
 
 mod cli;
 mod config;
+mod job_handler;
 mod letsencrypt;
 mod status_page;
 
@@ -17,7 +19,9 @@ async fn main() {
     let _config = OrchestratorConfig::load();
     let acceptor = letsencrypt::acme(&args).await;
 
-    let app = Router::new().route("/", get(status_page::show_status));
+    let app = Router::new()
+        .route("/", get(status_page::show_status))
+        .route("/run_job", get(job_handler::run_job));
 
     let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port));
 

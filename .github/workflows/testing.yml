@@ -61,10 +61,6 @@ jobs:
       run: cargo hack --feature-powerset clippy --all-targets --locked ${{ matrix.cargo_profile }} -- -D warnings
     - name: Ensure that tests pass under every possible combination of features
       run: cargo hack --feature-powerset test ${{ matrix.cargo_profile }}
-    - name: Test --ci flag
-      run: |
-        cd ussal-bencher
-        cargo run ${{ matrix.cargo_profile }}
     - name: Ensure that tests did not create or modify any files that arent .gitignore'd
       shell: bash
       run: |

@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use uuid::Uuid;
 
+/// TODO: autoreload when file changes
 #[derive(Serialize, Deserialize)]
 pub struct OrchestratorConfig {
-    pub tokens: Vec<String>,
+    pub tokens: Vec<Uuid>,
 }
 
 impl OrchestratorConfig {
@@ -16,12 +18,15 @@ impl OrchestratorConfig {
         if path.exists() {
             serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()
         } else {
-            OrchestratorConfig { tokens: vec![] }
+            let config = OrchestratorConfig {
+                tokens: vec![Uuid::new_v4()],
+            };
+            config.save();
+            config
         }
     }
 
-    #[allow(dead_code)]
-    pub fn save(&self) {
+    fn save(&self) {
         std::fs::write(
             OrchestratorConfig::path(),
             serde_json::to_vec(self).unwrap(),
