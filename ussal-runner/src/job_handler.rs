@@ -30,7 +30,7 @@ async fn run_job_websocket(stream: WebSocket) {
                             .unwrap();
                         return;
                     }
-                    tracing::info!("request {request:?}");
+                    tracing::info!("request {} {} {}", request.job_id, request.os, request.arch);
 
                     let response = JobResponse {
                         job_id: request.job_id,
