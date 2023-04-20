@@ -27,11 +27,11 @@ impl OrchestratorConfig {
     }
 
     fn save(&self) {
-        std::fs::write(
-            OrchestratorConfig::path(),
-            serde_json::to_vec(self).unwrap(),
-        )
-        .unwrap();
+        let path = OrchestratorConfig::path();
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, serde_json::to_vec(self).unwrap())
+            .map_err(|e| anyhow::anyhow!("Failed to write to {path:?} {e}"))
+            .unwrap();
     }
 }
 

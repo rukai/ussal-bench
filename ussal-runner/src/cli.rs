@@ -1,7 +1,21 @@
 use clap::Parser;
 
-#[derive(Parser, Debug)]
+// TODO: make mode into a subcommand
+#[derive(clap::ValueEnum, Clone, Copy)]
+pub enum Mode {
+    Runner,
+    // TODO: put domains and email in here
+    Orchestrator,
+    OrchestratorAndRunner,
+    DestructivelyInstallRunner,
+}
+
+#[derive(Parser)]
 pub struct Args {
+    /// Operation mode for the runner.
+    #[clap(long, required = true)]
+    pub mode: Mode,
+
     /// Domains used in the letsencrypt certificate
     #[clap(long, required = true)]
     pub domains: Vec<String>,
