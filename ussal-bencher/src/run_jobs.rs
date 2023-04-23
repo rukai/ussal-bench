@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::collections::HashMap;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-use ussal_shared::runner_protocol::{BenchComplete, JobRequest, JobResponse};
+use ussal_shared::orchestrator_protocol::{BenchComplete, JobRequest, JobResponse};
 use uuid::Uuid;
 
 type JobResults = HashMap<Uuid, JobResult>;
@@ -43,21 +43,21 @@ pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
             match response {
                 Ok(response) => {
                     match response.result {
-                        ussal_shared::runner_protocol::JobResult::BenchComplete(x) => {
+                        ussal_shared::orchestrator_protocol::JobResult::BenchComplete(x) => {
                             if let Some(job) = job_results.get_mut(&response.job_id) {
                                 job.benches.push(x);
                             }
                         }
-                        ussal_shared::runner_protocol::JobResult::BenchError(e) => {
+                        ussal_shared::orchestrator_protocol::JobResult::BenchError(e) => {
                             // TODO: Fail only bench
                             return Err(anyhow!(e));
                         }
-                        ussal_shared::runner_protocol::JobResult::JobComplete => {
+                        ussal_shared::orchestrator_protocol::JobResult::JobComplete => {
                             if let Some(job) = job_results.get_mut(&response.job_id) {
                                 job.finished = true;
                             }
                         }
-                        ussal_shared::runner_protocol::JobResult::JobError(e) => {
+                        ussal_shared::orchestrator_protocol::JobResult::JobError(e) => {
                             return Err(anyhow!(e))
                         }
                     }

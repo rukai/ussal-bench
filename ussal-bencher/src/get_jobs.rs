@@ -1,7 +1,7 @@
 use crate::cli::Args;
 use anyhow::{anyhow, Result};
 use subprocess::{Exec, Redirection};
-use ussal_shared::runner_protocol::JobRequest;
+use ussal_shared::orchestrator_protocol::JobRequest;
 use uuid::Uuid;
 
 pub fn get_jobs(args: &Args) -> Result<Vec<JobRequest>> {

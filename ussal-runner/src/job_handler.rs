@@ -4,7 +4,7 @@ use axum::response::IntoResponse;
 use futures::stream::StreamExt;
 use futures::SinkExt;
 
-use ussal_shared::runner_protocol::{JobRequest, JobResponse, JobResult};
+use ussal_shared::orchestrator_protocol::{BenchComplete, JobRequest, JobResponse, JobResult};
 
 pub async fn run_job(ws: WebSocketUpgrade) -> impl IntoResponse {
     ws.on_upgrade(run_job_websocket)
@@ -38,7 +38,26 @@ async fn run_job_websocket(stream: WebSocket) {
 
                             orchestrator.receive_response(request).await
                         }
-                        State::OrchestratorAndRunner => crate::runner::run_job_request(request),
+                        State::OrchestratorAndRunner => {
+                            let bench_name = "mat4 transform vector3a".to_owned();
+                            use ussal_shared::runner_protocol::JobRequest;
+                            let request = JobRequest {
+                                job_id: request.job_id,
+                                binary: request.binary.clone(),
+                                bench_name: bench_name.clone(),
+                            };
+                            let job_response = crate::runner::run_job_request(&request);
+                            JobResponse {
+                                job_id: job_response.job_id,
+                                result: match job_response.result {
+                                    Ok(x) => JobResult::BenchComplete(BenchComplete {
+                                        bench_name: bench_name.clone(),
+                                        wall_time: x.wall_time,
+                                    }),
+                                    Err(err) => JobResult::BenchError(err),
+                                },
+                            }
+                        }
                     };
 
                     tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
