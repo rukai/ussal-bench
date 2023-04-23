@@ -10,7 +10,9 @@ mod config;
 mod install;
 mod job_handler;
 mod letsencrypt;
+mod runner;
 mod status_page;
+mod system;
 
 #[tokio::main]
 async fn main() {
@@ -32,6 +34,7 @@ async fn orchestrator(args: Args) {
 
     let app = Router::new()
         .route("/", get(status_page::show_status))
+        //.route("/request_job", get(job_handler::request_job)) // turn connections into websocket, store websocket in state
         .route("/run_job", get(job_handler::run_job));
 
     let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port));

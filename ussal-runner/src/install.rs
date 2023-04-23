@@ -1,6 +1,7 @@
 use crate::cli::Args;
-use anyhow::{anyhow, Result};
-use subprocess::{Exec, Redirection};
+use crate::system::run_command;
+use std::fs::OpenOptions;
+use std::io::Write;
 
 pub fn install_runner(args: Args) {
     // Not a security check, just to provide a better error to the user.
@@ -62,6 +63,21 @@ WantedBy=multi-user.target
         "Ussal orchestrator and runner", start
     );
 
+    if !std::fs::read_to_string("/etc/sudoers")
+        .unwrap()
+        .contains("ussal-runner")
+    {
+        let mut sudoers = OpenOptions::new()
+            .append(true)
+            .open("/etc/sudoers")
+            .unwrap();
+        writeln!(
+            sudoers,
+            "\nussal-runner ALL = (ussal-sandbox) NOPASSWD: ALL"
+        )
+        .unwrap();
+    }
+
     std::fs::write("/etc/systemd/system/ussal-runner.service", service_file).unwrap();
     run_command("systemctl", &["daemon-reload"]).unwrap();
     run_command("systemctl", &["enable", "ussal-runner"]).unwrap();
@@ -73,26 +89,4 @@ fn user_exists(name: &str) -> bool {
         .unwrap()
         .lines()
         .any(|x| x.starts_with(&format!("{name}:")))
-}
-
-/// Runs a command and returns the output as a string.
-/// Both stderr and stdout are returned in the result.
-pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
-    let data = Exec::cmd(command)
-        .args(args)
-        .stdout(Redirection::Pipe)
-        .stderr(Redirection::Merge)
-        .capture()?;
-
-    if data.exit_status.success() {
-        Ok(data.stdout_str())
-    } else {
-        Err(anyhow!(
-            "command {} {:?} exited with {:?} and output:\n{}",
-            command,
-            args,
-            data.exit_status,
-            data.stdout_str()
-        ))
-    }
 }
