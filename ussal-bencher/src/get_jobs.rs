@@ -13,7 +13,7 @@ pub fn get_jobs(args: &Args) -> Result<Vec<JobRequest>> {
         .unwrap()
         .success()
     {
-        return Err(anyhow!("no"));
+        return Err(anyhow!(""));
     }
     // Run the command again, this time capturing the output
     let output = run_command(&cargo, &["bench", "--no-run"])?;

@@ -49,17 +49,27 @@ use ussal_shared::{Bench, BenchArchive, BenchMeasurement};
 
 #[tokio::main]
 async fn main() {
+    std::process::exit(run().await);
+}
+
+async fn run() -> i32 {
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
     tracing_subscriber::fmt().with_writer(non_blocking).init();
 
     let args = Args::parse();
 
-    let Ok(jobs) = get_jobs::get_jobs(&args) else { return; };
+    let jobs = match get_jobs::get_jobs(&args) {
+        Ok(jobs) => jobs,
+        Err(err) => {
+            tracing::error!("Failed to get benchmarks: {err}");
+            return 1;
+        }
+    };
     let results = match run_jobs::run_jobs(args, jobs).await {
         Ok(results) => results,
         Err(err) => {
             tracing::error!("Failed to run remote benchmarks: {err}");
-            return;
+            return 1;
         }
     };
 
@@ -112,4 +122,6 @@ async fn main() {
     results.save("bench_ci_web_root/bench_history.cbor");
 
     results.save("bench.cbor");
+
+    0
 }

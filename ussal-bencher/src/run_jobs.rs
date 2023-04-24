@@ -77,6 +77,6 @@ pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
     }
 
     Err(anyhow!(
-        "Connection was closed before all jobs were finished"
+        "Connection was closed before all jobs were finished. Last known job state: {job_results:#?}"
     ))
 }
