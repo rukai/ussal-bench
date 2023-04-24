@@ -63,7 +63,7 @@ async fn main() {
         }
     };
 
-    tracing::info!("results: {:?}", results);
+    tracing::info!("results: {:#?}", results);
 
     let results = BenchArchive::new(
         "Ussal Example Benchmarks".to_owned(),

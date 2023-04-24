@@ -5,14 +5,27 @@ use uuid::Uuid;
 pub struct JobRequest {
     pub job_id: Uuid,
     pub binary: Vec<u8>,
-    pub bench_name: String,
+    pub ty: JobRequestType,
 }
 
-/// Multiple JobResponses will be sent per JobRequest
+#[derive(Serialize, Deserialize, Debug)]
+pub enum JobRequestType {
+    RunBench { bench_name: String },
+    ListBenches,
+}
+
+/// One JobResponse will be sent per JobRequest
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JobResponse {
     pub job_id: Uuid,
-    pub result: Result<BenchComplete, String>,
+    pub ty: JobResponseType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum JobResponseType {
+    RunBench(BenchComplete),
+    ListBenches(Vec<String>),
+    Error(String),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
