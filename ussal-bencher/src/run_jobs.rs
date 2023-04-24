@@ -16,6 +16,7 @@ pub struct JobResult {
 }
 
 pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
+    assert!(!jobs.is_empty(), "jobs must contain values otherwise we will deadlock waiting for a response that will never come");
     let mut job_results = HashMap::new();
 
     let uri = format!("wss://{}/run_job", args.address);

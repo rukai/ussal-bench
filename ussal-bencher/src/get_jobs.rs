@@ -16,7 +16,8 @@ pub fn get_jobs(args: &Args) -> Result<Vec<JobRequest>> {
         return Err(anyhow!(""));
     }
     // Run the command again, this time capturing the output
-    let output = run_command(&cargo, &["bench", "--no-run"])?;
+    // `--color never` is critical for our hacky parser below
+    let output = run_command(&cargo, &["bench", "--no-run", "--color", "never"])?;
     let mut jobs = vec![];
     for line in output.lines() {
         if line.trim().starts_with("Executable") {
@@ -34,6 +35,10 @@ pub fn get_jobs(args: &Args) -> Result<Vec<JobRequest>> {
                 arch: "x86_64".to_owned(),
             })
         }
+    }
+
+    if jobs.is_empty() {
+        return Err(anyhow!("No benchmarks found"));
     }
 
     Ok(jobs)
