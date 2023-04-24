@@ -65,7 +65,7 @@ async fn run() -> i32 {
             return 1;
         }
     };
-    let results = match run_jobs::run_jobs(args, jobs).await {
+    let job_results = match run_jobs::run_jobs(args, jobs).await {
         Ok(results) => results,
         Err(err) => {
             tracing::error!("Failed to run remote benchmarks: {err}");
@@ -73,7 +73,15 @@ async fn run() -> i32 {
         }
     };
 
-    tracing::info!("results: {:#?}", results);
+    let benches: Vec<Bench> = job_results
+        .map(|job| Bench {
+            name: job.bench_name,
+            keys: HashMap::from([("type".to_owned(), "walltime (ns)".to_owned())]),
+            measurements: vec![BenchMeasurement {
+                value: job.wall_time,
+            }],
+        })
+        .collect();
 
     let results = BenchArchive::new(
         "Ussal Example Benchmarks".to_owned(),
@@ -114,7 +122,10 @@ async fn run() -> i32 {
                     BenchMeasurement { value: 15. },
                 ],
             },
-        ],
+        ]
+        .into_iter()
+        .chain(benches.into_iter())
+        .collect(),
     );
 
     // TODO: handle unwraps

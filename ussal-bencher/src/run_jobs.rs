@@ -5,9 +5,6 @@ use std::{collections::HashMap, time::Duration};
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use ussal_shared::orchestrator_protocol::{BenchComplete, JobRequest, JobResponse};
-use uuid::Uuid;
-
-type JobResults = HashMap<Uuid, JobResult>;
 
 #[derive(Debug)]
 pub struct JobResult {
@@ -15,7 +12,10 @@ pub struct JobResult {
     benches: Vec<BenchComplete>,
 }
 
-pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
+pub async fn run_jobs(
+    args: Args,
+    jobs: Vec<JobRequest>,
+) -> Result<impl Iterator<Item = BenchComplete>> {
     assert!(!jobs.is_empty(), "jobs must contain values otherwise we will deadlock waiting for a response that will never come");
     let mut job_results = HashMap::new();
 
@@ -46,9 +46,12 @@ pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
             match response {
                 Ok(response) => {
                     match response.result {
-                        ussal_shared::orchestrator_protocol::JobResult::BenchComplete(x) => {
+                        ussal_shared::orchestrator_protocol::JobResult::BenchComplete(bench) => {
                             if let Some(job) = job_results.get_mut(&response.job_id) {
-                                job.benches.push(x);
+                                tracing::info!("{:?}", bench);
+                                job.benches.push(bench);
+                            } else {
+                                return Err(anyhow!("BenchComplete contained unknown job_id"));
                             }
                         }
                         ussal_shared::orchestrator_protocol::JobResult::BenchError(e) => {
@@ -58,6 +61,8 @@ pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
                         ussal_shared::orchestrator_protocol::JobResult::JobComplete => {
                             if let Some(job) = job_results.get_mut(&response.job_id) {
                                 job.finished = true;
+                            } else {
+                                return Err(anyhow!("JobComplete contained unknown job_id"));
                             }
                         }
                         ussal_shared::orchestrator_protocol::JobResult::JobError(e) => {
@@ -73,7 +78,9 @@ pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
             }
         }
         if job_results.values().all(|x| x.finished) {
-            return Ok(job_results);
+            return Ok(job_results
+                .into_values()
+                .flat_map(|x| x.benches.into_iter()));
         }
     }
 
