@@ -16,7 +16,7 @@ pub async fn show_status() -> Html<&'static str> {
 
     <body>
         <h1>Job Queue</h1>
-        <h1>Cluster Utilization</h1>
+        <h1>Cluster State</h1>
     </body>
 </html>
 "#,

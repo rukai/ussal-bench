@@ -1,7 +1,8 @@
 use crate::cli::Args;
 use anyhow::{anyhow, Result};
 use futures_util::{SinkExt, StreamExt};
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
+use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use ussal_shared::orchestrator_protocol::{BenchComplete, JobRequest, JobResponse};
 use uuid::Uuid;
@@ -18,8 +19,9 @@ pub async fn run_jobs(args: Args, jobs: Vec<JobRequest>) -> Result<JobResults> {
     let mut job_results = HashMap::new();
 
     let uri = format!("wss://{}/run_job", args.address);
-    let (ws_stream, _) = connect_async(&uri)
+    let (ws_stream, _) = timeout(Duration::from_secs(10), connect_async(&uri))
         .await
+        .map_err(|_| anyhow!("Timed out connecting to {uri} after 10 seconds"))?
         .map_err(|e| anyhow!(e).context(format!("Failed to connect to {uri}")))?;
     tracing::info!("WebSocket handshake has been successfully completed");
     let (mut tx, mut rx) = ws_stream.split();

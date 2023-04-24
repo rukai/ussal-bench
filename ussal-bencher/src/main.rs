@@ -55,7 +55,14 @@ async fn main() {
     let args = Args::parse();
 
     let Ok(jobs) = get_jobs::get_jobs(&args) else { return; };
-    let results = run_jobs::run_jobs(args, jobs).await;
+    let results = match run_jobs::run_jobs(args, jobs).await {
+        Ok(results) => results,
+        Err(err) => {
+            tracing::error!("Failed to run remote benchmarks: {err}");
+            return;
+        }
+    };
+
     tracing::info!("results: {:?}", results);
 
     let results = BenchArchive::new(
