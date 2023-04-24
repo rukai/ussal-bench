@@ -77,9 +77,12 @@ async fn run() -> i32 {
         .map(|job| Bench {
             name: job.bench_name,
             keys: HashMap::from([("type".to_owned(), "walltime (ns)".to_owned())]),
-            measurements: vec![BenchMeasurement {
-                value: job.wall_time,
-            }],
+            measurements: vec![
+                BenchMeasurement { value: 0.0 },
+                BenchMeasurement {
+                    value: job.wall_time,
+                },
+            ],
         })
         .collect();
 

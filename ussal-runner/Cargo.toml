@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.70"
-axum = { version = "0.5.15", features = ["ws"] }
+axum = { version = "0.6.0", features = ["ws"] }
 axum-server = "0.4.7"
 clap = { version = "4.2.2", features = ["derive"] }
 dirs-next = "2.0.0"
