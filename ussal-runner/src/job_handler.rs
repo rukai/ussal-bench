@@ -3,7 +3,6 @@ use axum::extract::{ws::WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use futures::stream::StreamExt;
 use futures::SinkExt;
-
 use ussal_shared::orchestrator_protocol as orch_proto;
 use ussal_shared::runner_protocol as runner_proto;
 
@@ -50,12 +49,16 @@ async fn run_job_websocket(stream: WebSocket) {
                                 todo!()
                             }
                             State::OrchestratorAndRunner => {
-                                let request = runner_proto::JobRequest {
+                                let list_request = runner_proto::JobRequest {
                                     job_id: request.job_id,
                                     binary: request.binary.clone(),
                                     ty: runner_proto::JobRequestType::ListBenches,
                                 };
-                                let job_response = crate::runner::run_job_request(&request);
+                                let job_response = tokio::task::spawn_blocking(move || {
+                                    crate::runner::run_job_request(&list_request)
+                                })
+                                .await
+                                .unwrap();
                                 let benches = match &job_response.ty {
                                     runner_proto::JobResponseType::RunBench(_) => {
                                         panic!("Unexpected response RunBench")
@@ -74,7 +77,11 @@ async fn run_job_websocket(stream: WebSocket) {
                                             bench_name: bench.clone(),
                                         },
                                     };
-                                    let job_response = crate::runner::run_job_request(&request);
+                                    let job_response = tokio::task::spawn_blocking(move || {
+                                        crate::runner::run_job_request(&request)
+                                    })
+                                    .await
+                                    .unwrap();
                                     let response = orch_proto::JobResponse {
                                         job_id: job_response.job_id,
                                         result: match &job_response.ty {

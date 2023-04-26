@@ -30,19 +30,29 @@ async fn main() {
 
 async fn orchestrator(args: Args) {
     let _config = OrchestratorConfig::load();
-    let acceptor = letsencrypt::acme(&args).await;
 
     let app = Router::new()
         .route("/", get(status_page::show_status))
         //.route("/request_job", get(job_handler::request_job)) // turn connections into websocket, store websocket in state
         .route("/run_job", get(job_handler::run_job));
 
-    let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port));
+    let port = args
+        .port
+        .unwrap_or(if args.disable_https { 8000 } else { 443 });
+    let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, port));
 
-    tracing::info!("Starting HTTPS on port: {}", args.port);
-    axum_server::bind(addr)
-        .acceptor(acceptor)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    if args.disable_https {
+        tracing::info!("Starting HTTP on port: {}", port);
+        axum_server::bind(addr)
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
+    } else {
+        tracing::info!("Starting HTTPS on port: {}", port);
+        axum_server::bind(addr)
+            .acceptor(letsencrypt::acme(&args).await)
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
+    }
 }
