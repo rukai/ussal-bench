@@ -59,15 +59,7 @@ async fn run_job_websocket(stream: WebSocket) {
                                 })
                                 .await
                                 .unwrap();
-                                let benches = match &job_response.ty {
-                                    runner_proto::JobResponseType::RunBench(_) => {
-                                        panic!("Unexpected response RunBench")
-                                    }
-                                    runner_proto::JobResponseType::ListBenches(benches) => benches,
-                                    runner_proto::JobResponseType::Error(err) => {
-                                        panic!("error: {}", err)
-                                    }
-                                };
+                                let benches = job_response.ty.get_list_benches().unwrap();
 
                                 for bench in benches {
                                     let request = runner_proto::JobRequest {
@@ -84,24 +76,20 @@ async fn run_job_websocket(stream: WebSocket) {
                                     .unwrap();
                                     let response = orch_proto::JobResponse {
                                         job_id: job_response.job_id,
-                                        result: match &job_response.ty {
-                                            runner_proto::JobResponseType::RunBench(x) => {
+                                        result: job_response
+                                            .ty
+                                            .get_run_bench()
+                                            .map(|x| {
                                                 orch_proto::JobResult::BenchComplete(
                                                     orch_proto::BenchComplete {
                                                         bench_name: bench.clone(),
                                                         wall_time: x.wall_time,
                                                     },
                                                 )
-                                            }
-                                            runner_proto::JobResponseType::ListBenches(_) => {
-                                                orch_proto::JobResult::BenchError(
-                                                    "Unexpected response ListBenches".to_owned(),
-                                                )
-                                            }
-                                            runner_proto::JobResponseType::Error(err) => {
-                                                orch_proto::JobResult::BenchError(err.clone())
-                                            }
-                                        },
+                                            })
+                                            .unwrap_or_else(|err| {
+                                                orch_proto::JobResult::BenchError(err)
+                                            }),
                                     };
                                     tx.send(Message::Binary(
                                         serde_cbor::to_vec(&response).unwrap(),

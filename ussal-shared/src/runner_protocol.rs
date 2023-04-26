@@ -28,6 +28,24 @@ pub enum JobResponseType {
     Error(String),
 }
 
+impl JobResponseType {
+    pub fn get_run_bench(&self) -> Result<&BenchComplete, String> {
+        match self {
+            JobResponseType::RunBench(x) => Ok(x),
+            JobResponseType::ListBenches(_) => Err("Unexpected response ListBenches".to_owned()),
+            JobResponseType::Error(err) => Err(err.clone()),
+        }
+    }
+
+    pub fn get_list_benches(&self) -> Result<&Vec<String>, String> {
+        match self {
+            JobResponseType::ListBenches(benches) => Ok(benches),
+            JobResponseType::RunBench(_) => Err("Unexpected response RunBench".to_owned()),
+            JobResponseType::Error(err) => Err(err.clone()),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BenchComplete {
     pub wall_time: f32,
