@@ -3,7 +3,9 @@ use axum::Router;
 use clap::Parser;
 use cli::{Args, Mode};
 use config::OrchestratorConfig;
+use job_handler::{HandlerState, OrchestratorState};
 use std::net::{Ipv6Addr, SocketAddr};
+use std::sync::Arc;
 
 mod cli;
 mod config;
@@ -22,19 +24,24 @@ async fn main() {
     let args = Args::parse();
     match args.mode {
         Mode::Runner => todo!("Implement runner"),
-        Mode::Orchestrator => orchestrator(args).await,
-        Mode::OrchestratorAndRunner => orchestrator(args).await,
+        Mode::Orchestrator => orchestrator(args, false).await,
+        Mode::OrchestratorAndRunner => orchestrator(args, true).await,
         Mode::DestructivelyInstallRunner => install::install_runner(args),
     }
 }
 
-async fn orchestrator(args: Args) {
+async fn orchestrator(args: Args, runner: bool) {
     let _config = OrchestratorConfig::load();
 
     let app = Router::new()
         .route("/", get(status_page::show_status))
         //.route("/request_job", get(job_handler::request_job)) // turn connections into websocket, store websocket in state
-        .route("/run_job", get(job_handler::run_job));
+        .route("/run_job", get(job_handler::run_job))
+        .with_state(Arc::new(AppState::new(if runner {
+            HandlerState::OrchestratorAndRunner
+        } else {
+            HandlerState::Orchestrator(OrchestratorState {})
+        })));
 
     let port = args
         .port
@@ -54,5 +61,19 @@ async fn orchestrator(args: Args) {
             .serve(app.into_make_service())
             .await
             .unwrap();
+    }
+}
+
+pub struct AppState {
+    handler: HandlerState,
+    config: OrchestratorConfig,
+}
+
+impl AppState {
+    fn new(handler: HandlerState) -> Self {
+        AppState {
+            handler,
+            config: crate::config::OrchestratorConfig::load(),
+        }
     }
 }

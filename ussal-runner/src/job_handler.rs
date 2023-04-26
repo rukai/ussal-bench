@@ -1,20 +1,22 @@
-use axum::extract::ws::Message;
-use axum::extract::{ws::WebSocket, WebSocketUpgrade};
+use crate::AppState;
+use axum::extract::ws::{Message, WebSocket};
+use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use futures::stream::StreamExt;
 use futures::SinkExt;
+use std::sync::Arc;
 use ussal_shared::orchestrator_protocol as orch_proto;
 use ussal_shared::runner_protocol as runner_proto;
 
-pub async fn run_job(ws: WebSocketUpgrade) -> impl IntoResponse {
-    ws.on_upgrade(run_job_websocket)
+pub async fn run_job(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    ws.on_upgrade(|stream| run_job_websocket(stream, state))
 }
 
-async fn run_job_websocket(stream: WebSocket) {
-    let state = State::OrchestratorAndRunner; // TODO: get from axum
+async fn run_job_websocket(stream: WebSocket, state: Arc<AppState>) {
     let (mut tx, mut rx) = stream.split();
-
-    let config = crate::config::OrchestratorConfig::load();
 
     while let Some(Ok(message)) = rx.next().await {
         match &message {
@@ -23,7 +25,7 @@ async fn run_job_websocket(stream: WebSocket) {
                     serde_cbor::from_slice(binary);
                 match &request {
                     Ok(request) => {
-                        if !config.tokens.contains(&request.auth_token) {
+                        if !state.config.tokens.contains(&request.auth_token) {
                             let response = orch_proto::JobResponse {
                                 job_id: request.job_id,
                                 result: orch_proto::JobResult::JobError(
@@ -35,8 +37,8 @@ async fn run_job_websocket(stream: WebSocket) {
                                 .unwrap();
                             return;
                         }
-                        match &state {
-                            State::Orchestrator(orchestrator) => {
+                        match &state.handler {
+                            HandlerState::Orchestrator(orchestrator) => {
                                 // TODO: maybe combine these calls? or maybe keep seperate for locking reasons?
                                 let request = runner_proto::JobRequest {
                                     job_id: request.job_id,
@@ -48,7 +50,7 @@ async fn run_job_websocket(stream: WebSocket) {
                                 orchestrator.receive_response(&request).await;
                                 todo!()
                             }
-                            State::OrchestratorAndRunner => {
+                            HandlerState::OrchestratorAndRunner => {
                                 let list_request = runner_proto::JobRequest {
                                     job_id: request.job_id,
                                     binary: request.binary.clone(),
@@ -127,13 +129,13 @@ async fn run_job_websocket(stream: WebSocket) {
     }
 }
 
-enum State {
+pub enum HandlerState {
     #[allow(dead_code)]
     Orchestrator(OrchestratorState),
     OrchestratorAndRunner,
 }
 
-struct OrchestratorState {}
+pub struct OrchestratorState {}
 impl OrchestratorState {
     /// pop a connection off the list of available connections
     async fn send_request(&self, _request: &runner_proto::JobRequest) {
