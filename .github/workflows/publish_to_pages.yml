@@ -67,7 +67,7 @@ jobs:
         #      * server uses a self-signed cert
         #      * client includes the self-signing CA in the below command (doesnt need to be secret)
         #      * the client disables hostname verification in case the IP is not static, this is fine because the CA has only signed a single cert, so its unambigious which cert we are connecting to.
-        cargo run --release -- --address rukai.ddns.net:443 --auth-token ${{ secrets.USSAL_TOKEN }}
+        cargo run --release -- --address wss://rukai.ddns.net/run_job --auth-token ${{ secrets.USSAL_TOKEN }}
     - name: Upload pages
       uses: actions/upload-pages-artifact@v1
       with:

@@ -60,7 +60,14 @@ jobs:
       # * clippy --all-targets causes clippy to run against tests and examples which it doesn't do by default.
       run: cargo hack --feature-powerset clippy --all-targets --locked ${{ matrix.cargo_profile }} -- -D warnings
     - name: Ensure that tests pass under every possible combination of features
-      run: cargo hack --feature-powerset test ${{ matrix.cargo_profile }}
+      run: |
+        # setup for integration tests
+        cargo build -p ussal-runner
+        sudo target/debug/ussal-runner --mode destructively-install-runner --domains rukai.ddns.net --email rubickent@gmail.com
+        sudo systemctl stop ussal-runner
+
+        cargo hack --feature-powerset test ${{ matrix.cargo_profile }}
+      if: runner.os == 'Linux'
     - name: Ensure that tests did not create or modify any files that arent .gitignore'd
       shell: bash
       run: |
