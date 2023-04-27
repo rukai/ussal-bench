@@ -40,8 +40,6 @@ async fn run(args: Args) {
 }
 
 async fn orchestrator(args: Args, runner: bool) {
-    let _config = OrchestratorConfig::load();
-
     let app = Router::new()
         .route("/", get(status_page::show_status))
         //.route("/request_job", get(job_handler::request_job)) // turn connections into websocket, store websocket in state

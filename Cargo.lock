@@ -3988,8 +3988,7 @@ dependencies = [
 [[package]]
 name = "tokio-bin-process"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "724e1fb65ab8cca5e6559192700fe45844eb69545b43b856d61c8d62e3bb0c52"
+source = "git+https://github.com/rukai/tokio-bin-process?branch=fix_running_external_crates#14d38b1fa55347f1337ba39027227299c492764a"
 dependencies = [
  "anyhow",
  "itertools",
@@ -4328,6 +4327,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "ussal-bencher"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.2.4",
+ "criterion",
+ "futures-util",
+ "glam",
+ "log",
+ "serde_cbor",
+ "serial_test",
+ "subprocess",
+ "tokio",
+ "tokio-bin-process",
+ "tokio-tungstenite",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "url",
+ "ussal_shared",
+ "uuid",
+ "wasm-bindgen-cli-support",
+]
+
+[[package]]
 name = "ussal-server"
 version = "0.1.0"
 dependencies = [
@@ -4352,31 +4376,6 @@ dependencies = [
  "tracing-subscriber",
  "ussal_shared",
  "uuid",
-]
-
-[[package]]
-name = "ussal_bencher"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap 4.2.4",
- "criterion",
- "futures-util",
- "glam",
- "log",
- "serde_cbor",
- "serial_test",
- "subprocess",
- "tokio",
- "tokio-bin-process",
- "tokio-tungstenite",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "url",
- "ussal_shared",
- "uuid",
- "wasm-bindgen-cli-support",
 ]
 
 [[package]]

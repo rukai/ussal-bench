@@ -1,10 +1,6 @@
 use crate::cli::LogFormat;
 use anyhow::{anyhow, Result};
 use subprocess::{Exec, Redirection};
-use tokio::{
-    signal::unix::{signal, SignalKind},
-    sync::watch,
-};
 use tracing_appender::non_blocking::WorkerGuard;
 
 /// Runs a command and returns the output as a string.
@@ -52,7 +48,20 @@ pub fn init_tracing(format: LogFormat) -> WorkerGuard {
     guard
 }
 
+#[cfg(target_os = "windows")]
 pub async fn init_shutdown_handler() -> tokio::sync::watch::Receiver<bool> {
+    use tokio::sync::watch;
+    let (trigger_shutdown_tx, trigger_shutdown_rx) = watch::channel(false);
+    std::mem::forget(trigger_shutdown_tx);
+    trigger_shutdown_rx
+}
+
+#[cfg(not(target_os = "windows"))]
+pub async fn init_shutdown_handler() -> tokio::sync::watch::Receiver<bool> {
+    use tokio::{
+        signal::unix::{signal, SignalKind},
+        sync::watch,
+    };
     // We need to block on this part to ensure that we immediately register these signals.
     // Otherwise if we included signal creation in the below spawned task we would be at the mercy of whenever tokio decides to start running the task.
     let mut interrupt = signal(SignalKind::interrupt()).unwrap();
