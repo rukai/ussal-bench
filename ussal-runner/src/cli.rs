@@ -37,4 +37,13 @@ pub struct Args {
     /// This option is useful for a setup where you have another webserver such as nginx running on the same machine as the ussal-runner that provides https.
     #[clap(long)]
     pub disable_https: bool,
+
+    #[clap(long, value_enum, default_value = "human")]
+    pub log_format: LogFormat,
+}
+
+#[derive(clap::ValueEnum, Clone, Copy)]
+pub enum LogFormat {
+    Human,
+    Json,
 }

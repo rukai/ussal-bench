@@ -1,5 +1,11 @@
+use crate::cli::LogFormat;
 use anyhow::{anyhow, Result};
 use subprocess::{Exec, Redirection};
+use tokio::{
+    signal::unix::{signal, SignalKind},
+    sync::watch,
+};
+use tracing_appender::non_blocking::WorkerGuard;
 
 /// Runs a command and returns the output as a string.
 /// Both stderr and stdout are returned in the result.
@@ -21,4 +27,49 @@ pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
             data.stdout_str()
         ))
     }
+}
+
+pub fn init_tracing(format: LogFormat) -> WorkerGuard {
+    let (non_blocking, guard) = tracing_appender::non_blocking(std::io::stdout());
+
+    let builder = tracing_subscriber::fmt().with_writer(non_blocking);
+
+    match format {
+        LogFormat::Json => builder.json().init(),
+        LogFormat::Human => builder.init(),
+    }
+
+    // When in json mode we need to process panics as events instead of printing directly to stdout.
+    // This is so that:
+    // * We dont include invalid json in stdout
+    // * panics can be received by whatever is processing the json events
+    //
+    // We dont do this for LogFormat::Human because the default panic messages are more readable for humans
+    if let LogFormat::Json = format {
+        crate::tracing_panic_handler::setup();
+    }
+
+    guard
+}
+
+pub async fn init_shutdown_handler() -> tokio::sync::watch::Receiver<bool> {
+    // We need to block on this part to ensure that we immediately register these signals.
+    // Otherwise if we included signal creation in the below spawned task we would be at the mercy of whenever tokio decides to start running the task.
+    let mut interrupt = signal(SignalKind::interrupt()).unwrap();
+    let mut terminate = signal(SignalKind::terminate()).unwrap();
+    let (trigger_shutdown_tx, trigger_shutdown_rx) = watch::channel(false);
+    tokio::spawn(async move {
+        tokio::select! {
+            _ = interrupt.recv() => {
+                tracing::info!("shutting down from SIGINT");
+            },
+            _ = terminate.recv() => {
+                tracing::info!("shutting down from SIGTERM");
+            },
+        };
+
+        trigger_shutdown_tx.send(true).unwrap();
+    });
+
+    trigger_shutdown_rx
 }

@@ -1,3 +1,4 @@
+use crate::system::{init_shutdown_handler, init_tracing};
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
@@ -15,13 +16,21 @@ mod letsencrypt;
 mod runner;
 mod status_page;
 mod system;
+mod tracing_panic_handler;
 
 #[tokio::main]
 async fn main() {
-    let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
-    tracing_subscriber::fmt().with_writer(non_blocking).init();
-
     let args = Args::parse();
+    let _tracing = init_tracing(args.log_format);
+    let mut trigger_shutdown_rx = init_shutdown_handler().await;
+
+    tokio::select! {
+        _ = run(args) => {}
+        _ = trigger_shutdown_rx.changed() => {}
+    }
+}
+
+async fn run(args: Args) {
     match args.mode {
         Mode::Runner => todo!("Implement runner"),
         Mode::Orchestrator => orchestrator(args, false).await,

@@ -27,6 +27,18 @@ pub async fn run_jobs(
     tracing::info!("WebSocket handshake has been successfully completed");
     let (mut tx, mut rx) = ws_stream.split();
 
+    let (request_tx, mut request_rx) = tokio::sync::mpsc::unbounded_channel();
+    tokio::spawn(async move {
+        while let Some(job) = request_rx.recv().await {
+            if let Err(err) = tx
+                .send(Message::Binary(serde_cbor::to_vec(&job).unwrap()))
+                .await
+            {
+                tracing::error!("Failed to send to server: {err}")
+            }
+        }
+    });
+
     for job in jobs {
         job_results.insert(
             job.job_id,
@@ -35,9 +47,7 @@ pub async fn run_jobs(
                 benches: vec![],
             },
         );
-        tx.send(Message::Binary(serde_cbor::to_vec(&job).unwrap()))
-            .await
-            .unwrap();
+        request_tx.send(job).unwrap();
     }
 
     while let Some(Ok(message)) = rx.next().await {
