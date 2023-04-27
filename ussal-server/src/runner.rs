@@ -5,14 +5,14 @@ use ussal_shared::runner_protocol::{
 
 pub fn run_job_request(request: &JobRequest) -> JobResponse {
     // TODO: write binary to tmpfs and run as ussal-sandbox
-    std::fs::write("/home/ussal-runner/binary-under-test", &request.binary).unwrap();
-    run_command("chmod", &["+x", "/home/ussal-runner/binary-under-test"]).unwrap();
+    std::fs::write("/home/ussal-server/binary-under-test", &request.binary).unwrap();
+    run_command("chmod", &["+x", "/home/ussal-server/binary-under-test"]).unwrap();
 
     match &request.ty {
         JobRequestType::ListBenches => {
             // `cargo bench` automatically adds in the `--bench`
             let output = run_command(
-                "/home/ussal-runner/binary-under-test",
+                "/home/ussal-server/binary-under-test",
                 &["--bench", "--list"],
             )
             .unwrap();
@@ -28,7 +28,7 @@ pub fn run_job_request(request: &JobRequest) -> JobResponse {
         }
         JobRequestType::RunBench { bench_name } => {
             let output = run_command(
-                "/home/ussal-runner/binary-under-test",
+                "/home/ussal-server/binary-under-test",
                 &["--bench", bench_name],
             )
             .unwrap();

@@ -4,6 +4,6 @@ members = [
     "ussal-viewer",
     "ussal-shared",
     "ussal-bencher",
-    "ussal-runner",
+    "ussal-server",
     "run-wasm",
 ]

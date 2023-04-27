@@ -4328,7 +4328,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ussal-runner"
+name = "ussal-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",

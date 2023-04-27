@@ -34,7 +34,7 @@ pub struct Args {
     /// Normally the server binds to localhost and the external address.
     /// When this is enabled the server binds only to localhost to avoid exposing unencrypted communications over the network.
     ///
-    /// This option is useful for a setup where you have another webserver such as nginx running on the same machine as the ussal-runner that provides https.
+    /// This option is useful for a setup where you have another webserver such as nginx running on the same machine as the ussal-server that provides https.
     #[clap(long)]
     pub disable_https: bool,
 

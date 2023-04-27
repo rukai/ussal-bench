@@ -35,10 +35,10 @@ async fn test_invalid_auth_key() {
     runner.shutdown_and_then_consume_events(&[]).await;
 }
 
-async fn ussal_runner() -> BinProcess {
-    // TODO: run as ussal-runner user, probably create a wrapper script that tokio-bin-process runs
+async fn ussal_server() -> BinProcess {
+    // TODO: run as ussal-server user, probably create a wrapper script that tokio-bin-process runs
     let mut runner = BinProcess::start_with_args(
-        "ussal-runner",
+        "ussal-server",
         "runner",
         &[
             "--mode",

@@ -62,9 +62,9 @@ jobs:
     - name: Ensure that tests pass under every possible combination of features
       run: |
         # setup for integration tests
-        cargo build -p ussal-runner
-        sudo target/debug/ussal-runner --mode destructively-install-runner --domains rukai.ddns.net --email rubickent@gmail.com
-        sudo systemctl stop ussal-runner
+        cargo build -p ussal-server
+        sudo target/debug/ussal-server --mode destructively-install-runner --domains rukai.ddns.net --email rubickent@gmail.com
+        sudo systemctl stop ussal-server
 
         cargo hack --feature-powerset test ${{ matrix.cargo_profile }}
       if: runner.os == 'Linux'
