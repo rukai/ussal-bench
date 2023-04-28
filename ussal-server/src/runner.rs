@@ -5,8 +5,10 @@ use ussal_shared::runner_protocol::{
 
 pub fn run_job_request(request: &JobRequest) -> JobResponse {
     // TODO: write binary to tmpfs and run as ussal-sandbox
-    std::fs::write("/home/ussal-server/binary-under-test", &request.binary).unwrap();
-    run_command("chmod", &["+x", "/home/ussal-server/binary-under-test"]).unwrap();
+    let binary_path = "/home/ussal-server/binary-under-test";
+    std::fs::remove_file(binary_path).ok();
+    std::fs::write(binary_path, &request.binary).unwrap();
+    run_command("chmod", &["+x", binary_path]).unwrap();
 
     match &request.ty {
         JobRequestType::ListBenches => {
