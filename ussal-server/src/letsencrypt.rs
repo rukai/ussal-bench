@@ -1,7 +1,7 @@
 use crate::cli::Args;
-use rustls::ServerConfig;
 use rustls_acme::axum::AxumAcceptor;
 use rustls_acme::caches::DirCache;
+use rustls_acme::futures_rustls::rustls::ServerConfig;
 use rustls_acme::AcmeConfig;
 use std::sync::Arc;
 use tokio_stream::StreamExt;
