@@ -2,7 +2,7 @@ use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use futures::stream::StreamExt;
+use futures::stream::{SplitSink, StreamExt};
 use futures::SinkExt;
 use std::sync::Arc;
 use ussal_shared::orchestrator_protocol as orch_proto;
@@ -25,90 +25,7 @@ async fn run_job_websocket(stream: WebSocket, state: Arc<AppState>) {
                     serde_cbor::from_slice(binary);
                 match &request {
                     Ok(request) => {
-                        if !state.config.tokens.contains(&request.auth_token) {
-                            let response = orch_proto::JobResponse {
-                                job_id: request.job_id,
-                                result: orch_proto::JobResult::JobError(
-                                    "Invalid auth token".to_owned(),
-                                ),
-                            };
-                            tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
-                                .await
-                                .unwrap();
-                            return;
-                        }
-                        match &state.handler {
-                            HandlerState::Orchestrator(orchestrator) => {
-                                // TODO: maybe combine these calls? or maybe keep seperate for locking reasons?
-                                let request = runner_proto::JobRequest {
-                                    job_id: request.job_id,
-                                    binary: request.binary.clone(),
-                                    ty: runner_proto::JobRequestType::ListBenches,
-                                };
-                                orchestrator.send_request(&request).await;
-
-                                orchestrator.receive_response(&request).await;
-                                todo!()
-                            }
-                            HandlerState::OrchestratorAndRunner => {
-                                let list_request = runner_proto::JobRequest {
-                                    job_id: request.job_id,
-                                    binary: request.binary.clone(),
-                                    ty: runner_proto::JobRequestType::ListBenches,
-                                };
-                                let job_response = tokio::task::spawn_blocking(move || {
-                                    crate::runner::run_job_request(&list_request)
-                                })
-                                .await
-                                .unwrap();
-                                let benches = job_response.ty.get_list_benches().unwrap();
-
-                                for bench in benches {
-                                    let request = runner_proto::JobRequest {
-                                        job_id: request.job_id,
-                                        binary: request.binary.clone(),
-                                        ty: runner_proto::JobRequestType::RunBench {
-                                            bench_name: bench.clone(),
-                                        },
-                                    };
-                                    let job_response = tokio::task::spawn_blocking(move || {
-                                        crate::runner::run_job_request(&request)
-                                    })
-                                    .await
-                                    .unwrap();
-                                    let response = orch_proto::JobResponse {
-                                        job_id: job_response.job_id,
-                                        result: job_response
-                                            .ty
-                                            .get_run_bench()
-                                            .map(|x| {
-                                                orch_proto::JobResult::BenchComplete(
-                                                    orch_proto::BenchComplete {
-                                                        bench_name: bench.clone(),
-                                                        wall_time: x.wall_time,
-                                                    },
-                                                )
-                                            })
-                                            .unwrap_or_else(|err| {
-                                                orch_proto::JobResult::BenchError(err)
-                                            }),
-                                    };
-                                    tx.send(Message::Binary(
-                                        serde_cbor::to_vec(&response).unwrap(),
-                                    ))
-                                    .await
-                                    .unwrap();
-                                }
-                            }
-                        }
-
-                        let response = orch_proto::JobResponse {
-                            job_id: request.job_id,
-                            result: orch_proto::JobResult::JobComplete,
-                        };
-                        tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
-                            .await
-                            .unwrap();
+                        process_request(&mut tx, request, &state).await;
                     }
                     Err(err) => {
                         tracing::warn!("Invalid cbor in JobRequest {err}\ncontents: {binary:?}");
@@ -120,13 +37,100 @@ async fn run_job_websocket(stream: WebSocket, state: Arc<AppState>) {
                 tracing::error!("Message::Text is not supported in the ussal protocol, but a Message::Text was received: {text:?}");
                 return;
             }
-            Message::Close(close) => {
-                tracing::error!("hmmm wonder what this is for: {close:?}");
-                return;
+            Message::Close(_) | Message::Ping(_) | Message::Pong(_) => {
+                // we can just ignore these
             }
-            Message::Ping(_) | Message::Pong(_) => { /* we can just ignore these */ }
         }
     }
+}
+
+async fn fail_job(
+    tx: &mut SplitSink<WebSocket, Message>,
+    request: &orch_proto::JobRequest,
+    message: String,
+) {
+    let response = orch_proto::JobResponse {
+        job_id: request.job_id,
+        result: orch_proto::JobResult::JobError(message),
+    };
+    tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
+        .await
+        .unwrap();
+}
+
+async fn process_request(
+    tx: &mut SplitSink<WebSocket, Message>,
+    request: &orch_proto::JobRequest,
+    state: &AppState,
+) {
+    if !state.config.tokens.contains(&request.auth_token) {
+        fail_job(tx, request, "Invalid auth token".to_owned()).await;
+        return;
+    }
+    match &state.handler {
+        HandlerState::Orchestrator(orchestrator) => {
+            // TODO: maybe combine these calls? or maybe keep seperate for locking reasons?
+            let request = runner_proto::JobRequest {
+                job_id: request.job_id,
+                binary: request.binary.clone(),
+                ty: runner_proto::JobRequestType::ListBenches,
+            };
+            orchestrator.send_request(&request).await;
+
+            orchestrator.receive_response(&request).await;
+            todo!()
+        }
+        HandlerState::OrchestratorAndRunner => {
+            let list_request = runner_proto::JobRequest {
+                job_id: request.job_id,
+                binary: request.binary.clone(),
+                ty: runner_proto::JobRequestType::ListBenches,
+            };
+            let job_response =
+                tokio::task::spawn_blocking(move || crate::runner::run_job_request(&list_request))
+                    .await
+                    .unwrap();
+            let benches = job_response.ty.get_list_benches().unwrap();
+
+            for bench in benches {
+                let request = runner_proto::JobRequest {
+                    job_id: request.job_id,
+                    binary: request.binary.clone(),
+                    ty: runner_proto::JobRequestType::RunBench {
+                        bench_name: bench.clone(),
+                    },
+                };
+                let job_response =
+                    tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
+                        .await
+                        .unwrap();
+                let response = orch_proto::JobResponse {
+                    job_id: job_response.job_id,
+                    result: job_response
+                        .ty
+                        .get_run_bench()
+                        .map(|x| {
+                            orch_proto::JobResult::BenchComplete(orch_proto::BenchComplete {
+                                bench_name: bench.clone(),
+                                wall_time: x.wall_time,
+                            })
+                        })
+                        .unwrap_or_else(orch_proto::JobResult::BenchError),
+                };
+                tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
+                    .await
+                    .unwrap();
+            }
+        }
+    }
+
+    let response = orch_proto::JobResponse {
+        job_id: request.job_id,
+        result: orch_proto::JobResult::JobComplete,
+    };
+    tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
+        .await
+        .unwrap();
 }
 
 pub enum HandlerState {
