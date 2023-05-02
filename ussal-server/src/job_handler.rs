@@ -63,7 +63,7 @@ async fn process_request(
     request: &orch_proto::JobRequest,
     state: &AppState,
 ) {
-    if !state.config.tokens.contains(&request.auth_token) {
+    if !state.config.borrow().tokens.contains(&request.auth_token) {
         fail_job(tx, request, "Invalid auth token".to_owned()).await;
         return;
     }

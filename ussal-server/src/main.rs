@@ -3,7 +3,7 @@ use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use cli::{Args, Mode};
-use config::OrchestratorConfig;
+use config::ReloadableOrchestratorConfig;
 use job_handler::{HandlerState, OrchestratorState};
 use std::net::{Ipv6Addr, SocketAddr};
 use std::sync::Arc;
@@ -73,14 +73,14 @@ async fn orchestrator(args: Args, runner: bool) {
 
 pub struct AppState {
     handler: HandlerState,
-    config: OrchestratorConfig,
+    config: ReloadableOrchestratorConfig,
 }
 
 impl AppState {
     fn new(handler: HandlerState) -> Self {
         AppState {
             handler,
-            config: crate::config::OrchestratorConfig::load(),
+            config: ReloadableOrchestratorConfig::load(),
         }
     }
 }
