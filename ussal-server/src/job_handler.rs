@@ -67,61 +67,39 @@ async fn process_request(
         fail_job(tx, request, "Invalid auth token".to_owned()).await;
         return;
     }
-    match &state.handler {
-        HandlerState::Orchestrator(orchestrator) => {
-            // TODO: maybe combine these calls? or maybe keep seperate for locking reasons?
-            let request = runner_proto::JobRequest {
-                job_id: request.job_id,
-                binary: request.binary.clone(),
-                ty: runner_proto::JobRequestType::ListBenches,
-            };
-            orchestrator.send_request(&request).await;
+    let list_request = runner_proto::JobRequest {
+        job_id: request.job_id,
+        binary: request.binary.clone(),
+        ty: runner_proto::JobRequestType::ListBenches,
+    };
+    let job_response = state.handler.run_job_request(list_request).await;
+    let benches = job_response.ty.get_list_benches().unwrap();
 
-            orchestrator.receive_response(&request).await;
-            todo!()
-        }
-        HandlerState::OrchestratorAndRunner => {
-            let list_request = runner_proto::JobRequest {
-                job_id: request.job_id,
-                binary: request.binary.clone(),
-                ty: runner_proto::JobRequestType::ListBenches,
-            };
-            let job_response =
-                tokio::task::spawn_blocking(move || crate::runner::run_job_request(&list_request))
-                    .await
-                    .unwrap();
-            let benches = job_response.ty.get_list_benches().unwrap();
-
-            for bench in benches {
-                let request = runner_proto::JobRequest {
-                    job_id: request.job_id,
-                    binary: request.binary.clone(),
-                    ty: runner_proto::JobRequestType::RunBench {
+    for bench in benches {
+        let request = runner_proto::JobRequest {
+            job_id: request.job_id,
+            binary: request.binary.clone(),
+            ty: runner_proto::JobRequestType::RunBench {
+                bench_name: bench.clone(),
+            },
+        };
+        let job_response = state.handler.run_job_request(request).await;
+        let response = orch_proto::JobResponse {
+            job_id: job_response.job_id,
+            result: job_response
+                .ty
+                .get_run_bench()
+                .map(|x| {
+                    orch_proto::JobResult::BenchComplete(orch_proto::BenchComplete {
                         bench_name: bench.clone(),
-                    },
-                };
-                let job_response =
-                    tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
-                        .await
-                        .unwrap();
-                let response = orch_proto::JobResponse {
-                    job_id: job_response.job_id,
-                    result: job_response
-                        .ty
-                        .get_run_bench()
-                        .map(|x| {
-                            orch_proto::JobResult::BenchComplete(orch_proto::BenchComplete {
-                                bench_name: bench.clone(),
-                                wall_time: x.wall_time,
-                            })
-                        })
-                        .unwrap_or_else(orch_proto::JobResult::BenchError),
-                };
-                tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
-                    .await
-                    .unwrap();
-            }
-        }
+                        wall_time: x.wall_time,
+                    })
+                })
+                .unwrap_or_else(orch_proto::JobResult::BenchError),
+        };
+        tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
+            .await
+            .unwrap();
     }
 
     let response = orch_proto::JobResponse {
@@ -139,17 +117,33 @@ pub enum HandlerState {
     OrchestratorAndRunner,
 }
 
+impl HandlerState {
+    async fn run_job_request(
+        &self,
+        request: runner_proto::JobRequest,
+    ) -> runner_proto::JobResponse {
+        match self {
+            HandlerState::Orchestrator(_) => todo!(),
+            HandlerState::OrchestratorAndRunner => {
+                tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
+                    .await
+                    .unwrap()
+            }
+        }
+    }
+}
+
 pub struct OrchestratorState {}
 impl OrchestratorState {
     /// pop a connection off the list of available connections
-    async fn send_request(&self, _request: &runner_proto::JobRequest) {
+    async fn _send_request(&self, _request: &runner_proto::JobRequest) {
         // Filter connections by request.os and request.arch
         //connection.send(message).await.unwrap();
         todo!()
     }
 
     /// pop a connection off the list of available connections
-    async fn receive_response(
+    async fn _receive_response(
         &self,
         _request: &runner_proto::JobRequest,
     ) -> runner_proto::JobResponse {
