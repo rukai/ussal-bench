@@ -1,3 +1,4 @@
+use crate::connection_assigner::Request;
 use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{State, WebSocketUpgrade};
@@ -5,6 +6,8 @@ use axum::response::IntoResponse;
 use futures::stream::{SplitSink, StreamExt};
 use futures::SinkExt;
 use std::sync::Arc;
+use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::oneshot;
 use ussal_shared::orchestrator_protocol as orch_proto;
 use ussal_shared::runner_protocol as runner_proto;
 
@@ -75,6 +78,7 @@ async fn process_request(
     let job_response = state.handler.run_job_request(list_request).await;
     let benches = job_response.ty.get_list_benches().unwrap();
 
+    // TODO: do concurrently
     for bench in benches {
         let request = runner_proto::JobRequest {
             job_id: request.job_id,
@@ -123,7 +127,10 @@ impl HandlerState {
         request: runner_proto::JobRequest,
     ) -> runner_proto::JobResponse {
         match self {
-            HandlerState::Orchestrator(_) => todo!(),
+            HandlerState::Orchestrator(state) => {
+                let _connection = state.get_connection(&request);
+                todo!("hi");
+            }
             HandlerState::OrchestratorAndRunner => {
                 tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
                     .await
@@ -133,21 +140,27 @@ impl HandlerState {
     }
 }
 
-pub struct OrchestratorState {}
+pub struct OrchestratorState {
+    connection_tx: UnboundedSender<Request>,
+}
+
 impl OrchestratorState {
-    /// pop a connection off the list of available connections
-    async fn _send_request(&self, _request: &runner_proto::JobRequest) {
-        // Filter connections by request.os and request.arch
-        //connection.send(message).await.unwrap();
-        todo!()
+    pub fn new(connection_tx: UnboundedSender<Request>) -> OrchestratorState {
+        OrchestratorState { connection_tx }
     }
 
     /// pop a connection off the list of available connections
-    async fn _receive_response(
-        &self,
-        _request: &runner_proto::JobRequest,
-    ) -> runner_proto::JobResponse {
-        // Get response by matching the job_id
-        todo!()
+    async fn get_connection(&self, _request: &runner_proto::JobRequest) -> WebSocket {
+        // Filter connections by request.os and request.arch
+        //connection.send(message).await.unwrap();
+        let (tx, rx) = oneshot::channel();
+        self.connection_tx
+            .send(Request {
+                machine_type: "memes".to_owned(),
+                tx,
+            })
+            .unwrap();
+
+        rx.await.unwrap()
     }
 }

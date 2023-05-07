@@ -7,9 +7,11 @@ use config::ReloadableOrchestratorConfig;
 use job_handler::{HandlerState, OrchestratorState};
 use std::net::{Ipv6Addr, SocketAddr};
 use std::sync::Arc;
+use tokio::sync::mpsc::unbounded_channel;
 
 mod cli;
 mod config;
+mod connection_assigner;
 mod install;
 mod job_handler;
 mod letsencrypt;
@@ -47,7 +49,9 @@ async fn orchestrator(args: Args, runner: bool) {
         .with_state(Arc::new(AppState::new(if runner {
             HandlerState::OrchestratorAndRunner
         } else {
-            HandlerState::Orchestrator(OrchestratorState {})
+            let (connection_tx, connection_rx) = unbounded_channel();
+            tokio::spawn(connection_assigner::task(connection_rx));
+            HandlerState::Orchestrator(OrchestratorState::new(connection_tx))
         })));
 
     let port = args
