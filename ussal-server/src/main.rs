@@ -15,6 +15,7 @@ mod connection_assigner;
 mod install;
 mod job_handler;
 mod letsencrypt;
+mod request_job;
 mod runner;
 mod status_page;
 mod system;
@@ -34,7 +35,7 @@ async fn main() {
 
 async fn run(args: Args) {
     match args.mode {
-        Mode::Runner => todo!("Implement runner"),
+        Mode::Runner => runner::runner(args).await,
         Mode::Orchestrator => orchestrator(args, false).await,
         Mode::OrchestratorAndRunner => orchestrator(args, true).await,
         Mode::DestructivelyInstallRunner => install::install_runner(args),
@@ -44,14 +45,15 @@ async fn run(args: Args) {
 async fn orchestrator(args: Args, runner: bool) {
     let app = Router::new()
         .route("/", get(status_page::show_status))
-        //.route("/request_job", get(job_handler::request_job)) // turn connections into websocket, store websocket in state
+        .route("/request_job", get(request_job::request_job))
         .route("/run_job", get(job_handler::run_job))
         .with_state(Arc::new(AppState::new(if runner {
             HandlerState::OrchestratorAndRunner
         } else {
+            let (request_tx, request_rx) = unbounded_channel();
             let (connection_tx, connection_rx) = unbounded_channel();
-            tokio::spawn(connection_assigner::task(connection_rx));
-            HandlerState::Orchestrator(OrchestratorState::new(connection_tx))
+            tokio::spawn(connection_assigner::task(request_rx, connection_rx));
+            HandlerState::Orchestrator(OrchestratorState::new(request_tx, connection_tx))
         })));
 
     let port = args

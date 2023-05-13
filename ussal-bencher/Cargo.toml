@@ -8,6 +8,7 @@ default-run = "ussal-bencher"
 
 [dependencies]
 ussal_shared = { path = "../ussal-shared" }
+ussal-networking = { path = "../ussal-networking" }
 subprocess = "0.2.7"
 wasm-bindgen-cli-support = "0.2.78"
 log = "0.4"

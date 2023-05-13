@@ -1,7 +1,44 @@
+use crate::cli::Args;
 use crate::system::run_command;
+use anyhow::{anyhow, Result};
+use std::time::Duration;
+use tokio::net::TcpStream;
+use tokio::time::timeout;
+use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use ussal_shared::runner_protocol::{
     BenchComplete, JobRequest, JobRequestType, JobResponse, JobResponseType,
 };
+
+pub async fn runner(_args: Args) {
+    loop {
+        let stream = match connect("ws://localhost:8000/request_job").await {
+            Ok(stream) => stream,
+            Err(error) => {
+                tracing::error!(
+                    "{:?}",
+                    error.context("Failed to connect to orchestrator, retrying in 60s")
+                );
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            }
+        };
+        let (tx, mut rx) =
+            ussal_networking::spawn_read_write_tasks::<JobResponse, JobRequest>(stream).await;
+        if let Some(request) = rx.recv().await {
+            tracing::info!("running job: {} {:?}", request.job_id, request.ty);
+            let response = run_job_request(&request);
+            tx.send(response).unwrap();
+        }
+    }
+}
+
+async fn connect(uri: &str) -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+    let (ws_stream, _) = timeout(Duration::from_secs(10), connect_async(uri))
+        .await
+        .map_err(|_| anyhow!("Timed out connecting to {uri} after 10 seconds"))?
+        .map_err(|e| anyhow!(e).context(format!("Failed to connect to {uri}")))?;
+    Ok(ws_stream)
+}
 
 pub fn run_job_request(request: &JobRequest) -> JobResponse {
     // TODO: write binary to tmpfs and run as ussal-sandbox

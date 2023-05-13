@@ -1,10 +1,8 @@
-use crate::connection_assigner::Request;
+use crate::connection_assigner::{Connection, Request};
 use crate::AppState;
-use axum::extract::ws::{Message, WebSocket};
+use axum::extract::ws::WebSocket;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use futures::stream::{SplitSink, StreamExt};
-use futures::SinkExt;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::oneshot;
@@ -19,36 +17,19 @@ pub async fn run_job(
 }
 
 async fn run_job_websocket(stream: WebSocket, state: Arc<AppState>) {
-    let (mut tx, mut rx) = stream.split();
+    let (mut tx, mut rx) = ussal_networking::axum::spawn_read_write_tasks::<
+        orch_proto::JobResponse,
+        orch_proto::JobRequest,
+    >(stream)
+    .await;
 
-    while let Some(Ok(message)) = rx.next().await {
-        match &message {
-            Message::Binary(binary) => {
-                let request: serde_cbor::Result<orch_proto::JobRequest> =
-                    serde_cbor::from_slice(binary);
-                match &request {
-                    Ok(request) => {
-                        process_request(&mut tx, request, &state).await;
-                    }
-                    Err(err) => {
-                        tracing::warn!("Invalid cbor in JobRequest {err}\ncontents: {binary:?}");
-                        return;
-                    }
-                }
-            }
-            Message::Text(text) => {
-                tracing::error!("Message::Text is not supported in the ussal protocol, but a Message::Text was received: {text:?}");
-                return;
-            }
-            Message::Close(_) | Message::Ping(_) | Message::Pong(_) => {
-                // we can just ignore these
-            }
-        }
+    while let Some(request) = rx.recv().await {
+        process_request(&mut tx, &request, &state).await;
     }
 }
 
 async fn fail_job(
-    tx: &mut SplitSink<WebSocket, Message>,
+    tx: &mut UnboundedSender<orch_proto::JobResponse>,
     request: &orch_proto::JobRequest,
     message: String,
 ) {
@@ -56,13 +37,11 @@ async fn fail_job(
         job_id: request.job_id,
         result: orch_proto::JobResult::JobError(message),
     };
-    tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
-        .await
-        .unwrap();
+    tx.send(response).unwrap();
 }
 
 async fn process_request(
-    tx: &mut SplitSink<WebSocket, Message>,
+    tx: &mut UnboundedSender<orch_proto::JobResponse>,
     request: &orch_proto::JobRequest,
     state: &AppState,
 ) {
@@ -101,18 +80,14 @@ async fn process_request(
                 })
                 .unwrap_or_else(orch_proto::JobResult::BenchError),
         };
-        tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
-            .await
-            .unwrap();
+        tx.send(response).unwrap();
     }
 
     let response = orch_proto::JobResponse {
         job_id: request.job_id,
         result: orch_proto::JobResult::JobComplete,
     };
-    tx.send(Message::Binary(serde_cbor::to_vec(&response).unwrap()))
-        .await
-        .unwrap();
+    tx.send(response).unwrap();
 }
 
 pub enum HandlerState {
@@ -128,8 +103,9 @@ impl HandlerState {
     ) -> runner_proto::JobResponse {
         match self {
             HandlerState::Orchestrator(state) => {
-                let _connection = state.get_connection(&request);
-                todo!("hi");
+                let mut connection = state.get_connection(&request).await;
+                connection.tx.send(request).unwrap();
+                connection.rx.recv().await.unwrap()
             }
             HandlerState::OrchestratorAndRunner => {
                 tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
@@ -141,20 +117,26 @@ impl HandlerState {
 }
 
 pub struct OrchestratorState {
-    connection_tx: UnboundedSender<Request>,
+    request_tx: UnboundedSender<Request>,
+    pub connection_tx: UnboundedSender<WebSocket>,
 }
 
 impl OrchestratorState {
-    pub fn new(connection_tx: UnboundedSender<Request>) -> OrchestratorState {
-        OrchestratorState { connection_tx }
+    pub fn new(
+        request_tx: UnboundedSender<Request>,
+        connection_tx: UnboundedSender<WebSocket>,
+    ) -> OrchestratorState {
+        OrchestratorState {
+            request_tx,
+            connection_tx,
+        }
     }
 
     /// pop a connection off the list of available connections
-    async fn get_connection(&self, _request: &runner_proto::JobRequest) -> WebSocket {
+    async fn get_connection(&self, _request: &runner_proto::JobRequest) -> Connection {
         // Filter connections by request.os and request.arch
-        //connection.send(message).await.unwrap();
         let (tx, rx) = oneshot::channel();
-        self.connection_tx
+        self.request_tx
             .send(Request {
                 machine_type: "memes".to_owned(),
                 tx,

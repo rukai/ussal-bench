@@ -4424,9 +4424,24 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "url",
+ "ussal-networking",
  "ussal_shared",
  "uuid",
  "wasm-bindgen-cli-support",
+]
+
+[[package]]
+name = "ussal-networking"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "futures-util",
+ "serde",
+ "serde_cbor",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
 ]
 
 [[package]]
@@ -4449,9 +4464,11 @@ dependencies = [
  "subprocess",
  "tokio",
  "tokio-stream",
+ "tokio-tungstenite",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "ussal-networking",
  "ussal_shared",
  "uuid",
 ]
