@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JobRequest {
     pub job_id: Uuid,
     pub binary: Vec<u8>,
     pub ty: JobRequestType,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum JobRequestType {
     RunBench { bench_name: String },
     ListBenches,

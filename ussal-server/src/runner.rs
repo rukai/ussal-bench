@@ -28,6 +28,9 @@ pub async fn runner(_args: Args) {
             tracing::info!("running job: {} {:?}", request.job_id, request.ty);
             let response = run_job_request(&request);
             tx.send(response).unwrap();
+        } else {
+            tracing::error!("Connection was killed, retrying in 60s");
+            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     }
 }

@@ -8,6 +8,7 @@ use job_handler::{HandlerState, OrchestratorState};
 use std::net::{Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 use tokio::sync::mpsc::unbounded_channel;
+use tokio::sync::Semaphore;
 
 mod cli;
 mod config;
@@ -48,7 +49,7 @@ async fn orchestrator(args: Args, runner: bool) {
         .route("/request_job", get(request_job::request_job))
         .route("/run_job", get(job_handler::run_job))
         .with_state(Arc::new(AppState::new(if runner {
-            HandlerState::OrchestratorAndRunner
+            HandlerState::OrchestratorAndRunner(Semaphore::new(1))
         } else {
             let (request_tx, request_rx) = unbounded_channel();
             let (connection_tx, connection_rx) = unbounded_channel();

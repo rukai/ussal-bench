@@ -3,9 +3,10 @@ use crate::AppState;
 use axum::extract::ws::WebSocket;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
+use futures::future::join_all;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
-use tokio::sync::oneshot;
+use tokio::sync::{oneshot, Semaphore};
 use ussal_shared::orchestrator_protocol as orch_proto;
 use ussal_shared::runner_protocol as runner_proto;
 
@@ -57,31 +58,34 @@ async fn process_request(
     let job_response = state.handler.run_job_request(list_request).await;
     let benches = job_response.ty.get_list_benches().unwrap();
 
-    // TODO: do concurrently
-    for bench in benches {
-        let request = runner_proto::JobRequest {
-            job_id: request.job_id,
-            binary: request.binary.clone(),
-            ty: runner_proto::JobRequestType::RunBench {
-                bench_name: bench.clone(),
-            },
-        };
-        let job_response = state.handler.run_job_request(request).await;
-        let response = orch_proto::JobResponse {
-            job_id: job_response.job_id,
-            result: job_response
-                .ty
-                .get_run_bench()
-                .map(|x| {
-                    orch_proto::JobResult::BenchComplete(orch_proto::BenchComplete {
-                        bench_name: bench.clone(),
-                        wall_time: x.wall_time,
+    let run = benches.iter().map(|bench| {
+        let tx = tx.clone();
+        async move {
+            let request = runner_proto::JobRequest {
+                job_id: request.job_id,
+                binary: request.binary.clone(),
+                ty: runner_proto::JobRequestType::RunBench {
+                    bench_name: bench.clone(),
+                },
+            };
+            let job_response = state.handler.run_job_request(request).await;
+            let response = orch_proto::JobResponse {
+                job_id: job_response.job_id,
+                result: job_response
+                    .ty
+                    .get_run_bench()
+                    .map(|x| {
+                        orch_proto::JobResult::BenchComplete(orch_proto::BenchComplete {
+                            bench_name: bench.clone(),
+                            wall_time: x.wall_time,
+                        })
                     })
-                })
-                .unwrap_or_else(orch_proto::JobResult::BenchError),
-        };
-        tx.send(response).unwrap();
-    }
+                    .unwrap_or_else(orch_proto::JobResult::BenchError),
+            };
+            tx.send(response).unwrap();
+        }
+    });
+    join_all(run).await;
 
     let response = orch_proto::JobResponse {
         job_id: request.job_id,
@@ -93,7 +97,7 @@ async fn process_request(
 pub enum HandlerState {
     #[allow(dead_code)]
     Orchestrator(OrchestratorState),
-    OrchestratorAndRunner,
+    OrchestratorAndRunner(Semaphore),
 }
 
 impl HandlerState {
@@ -102,12 +106,18 @@ impl HandlerState {
         request: runner_proto::JobRequest,
     ) -> runner_proto::JobResponse {
         match self {
-            HandlerState::Orchestrator(state) => {
+            HandlerState::Orchestrator(state) => loop {
                 let mut connection = state.get_connection(&request).await;
-                connection.tx.send(request).unwrap();
-                connection.rx.recv().await.unwrap()
-            }
-            HandlerState::OrchestratorAndRunner => {
+                connection
+                    .tx
+                    .send(request.clone())
+                    .expect("assigner task should never die");
+                if let Some(response) = connection.rx.recv().await {
+                    break response;
+                }
+            },
+            HandlerState::OrchestratorAndRunner(semaphore) => {
+                let _permit = semaphore.acquire().await.unwrap();
                 tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
                     .await
                     .unwrap()
