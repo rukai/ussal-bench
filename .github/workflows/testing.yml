@@ -63,7 +63,7 @@ jobs:
       run: |
         # setup for integration tests
         cargo build -p ussal-server
-        sudo target/debug/ussal-server --mode destructively-install-runner --domains rukai.ddns.net --email rubickent@gmail.com
+        sudo target/debug/ussal-server destructively-install-runner --domains rukai.ddns.net --email rubickent@gmail.com
         sudo systemctl stop ussal-server
 
         cargo hack --feature-powerset test ${{ matrix.cargo_profile }}

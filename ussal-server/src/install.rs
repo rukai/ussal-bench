@@ -35,12 +35,13 @@ pub fn install_runner(args: Args) {
     )
     .unwrap();
 
+    let args = args.mode.orchestrator_args();
     let email = args
         .email
         .map(|email| format!("--email {}", email))
         .unwrap_or("".to_owned());
     let domains = args.domains.join(" ");
-    let start = format!("/home/ussal-server/ussal-server --mode orchestrator-and-runner --port 443 --domains {domains} {email}");
+    let start = format!("/home/ussal-server/ussal-server --port 443 --mode orchestrator-and-runner --domains {domains} {email}");
 
     let service_file = format!(
         r#"

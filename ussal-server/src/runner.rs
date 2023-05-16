@@ -1,4 +1,3 @@
-use crate::cli::Args;
 use crate::system::run_command;
 use anyhow::{anyhow, Result};
 use std::time::Duration;
@@ -9,9 +8,9 @@ use ussal_shared::runner_protocol::{
     BenchComplete, JobRequest, JobRequestType, JobResponse, JobResponseType,
 };
 
-pub async fn runner(_args: Args) {
+pub async fn runner(address: &str) {
     loop {
-        let stream = match connect("ws://localhost:8000/request_job").await {
+        let stream = match connect(address).await {
             Ok(stream) => stream,
             Err(error) => {
                 tracing::error!(

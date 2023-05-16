@@ -1,4 +1,4 @@
-use crate::cli::Args;
+use crate::cli::OrchestratorArgs;
 use rustls_acme::axum::AxumAcceptor;
 use rustls_acme::caches::DirCache;
 use rustls_acme::futures_rustls::rustls::ServerConfig;
@@ -6,7 +6,7 @@ use rustls_acme::AcmeConfig;
 use std::sync::Arc;
 use tokio_stream::StreamExt;
 
-pub async fn acme(args: &Args) -> AxumAcceptor {
+pub async fn acme(args: &OrchestratorArgs) -> AxumAcceptor {
     let release = env!("PROFILE") == "release";
 
     let mut state = AcmeConfig::new(args.domains.clone())

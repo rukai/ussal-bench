@@ -35,11 +35,11 @@ async fn main() {
 }
 
 async fn run(args: Args) {
-    match args.mode {
-        Mode::Runner => runner::runner(args).await,
-        Mode::Orchestrator => orchestrator(args, false).await,
-        Mode::OrchestratorAndRunner => orchestrator(args, true).await,
-        Mode::DestructivelyInstallRunner => install::install_runner(args),
+    match &args.mode {
+        Mode::Runner { address } => runner::runner(address).await,
+        Mode::Orchestrator { .. } => orchestrator(args, false).await,
+        Mode::OrchestratorAndRunner { .. } => orchestrator(args, true).await,
+        Mode::DestructivelyInstallRunner { .. } => install::install_runner(args),
     }
 }
 
@@ -56,6 +56,8 @@ async fn orchestrator(args: Args, runner: bool) {
             tokio::spawn(connection_assigner::task(request_rx, connection_rx));
             HandlerState::Orchestrator(OrchestratorState::new(request_tx, connection_tx))
         })));
+
+    let args = args.mode.orchestrator_args();
 
     let port = args
         .port

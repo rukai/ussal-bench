@@ -42,13 +42,12 @@ mod test {
             "ussal-server",
             "server",
             &[
-                "--mode",
+                "--log-format",
+                "json",
                 "orchestrator-and-runner",
                 "--disable-https",
                 "--domains",
                 "deletethis",
-                "--log-format",
-                "json",
             ],
         )
         .await;
