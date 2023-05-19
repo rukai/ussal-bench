@@ -18,7 +18,7 @@ ussal_shared = { path = "../ussal-shared" }
 ussal-networking = { path = "../ussal-networking" }
 backtrace = "0.3.67"
 backtrace-ext = "0.2.1"
-notify = "5.1.0"
+notify = "6.0.0"
 
 uuid.workspace = true
 futures-util.workspace = true
