@@ -6,11 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.70"
-serde = { version = "1.0.160", features = ["derive"] }
-tokio = { version = "1.27.0", features = ["full"] }
-tracing = "0.1.37"
-tokio-tungstenite = "0.18.0"
-futures-util = "0.3.28"
-serde_cbor = "0.11.2"
-axum = { version = "0.6.0", features = ["ws"] }
+serde_cbor.workspace = true
+futures-util.workspace = true
+axum.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tokio-tungstenite.workspace = true

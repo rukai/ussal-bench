@@ -4067,9 +4067,10 @@ dependencies = [
 [[package]]
 name = "tokio-bin-process"
 version = "0.1.0"
-source = "git+https://github.com/rukai/tokio-bin-process?branch=fix_running_external_crates#ed448ac760a9605974488dc95c248ccbad4397b4"
+source = "git+https://github.com/shotover/tokio-bin-process#47cae7e9d5d2eead8c5956506c1fa172430feb74"
 dependencies = [
  "anyhow",
+ "chrono",
  "itertools",
  "nix 0.26.2",
  "nu-ansi-term 0.47.0",
@@ -4436,6 +4437,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "clap 4.2.5",
  "futures-util",
  "serde",
  "serde_cbor",
@@ -4456,6 +4458,7 @@ dependencies = [
  "clap 4.2.5",
  "dirs-next",
  "futures",
+ "futures-util",
  "notify",
  "rustls-acme",
  "serde",
