@@ -112,8 +112,11 @@ impl HandlerState {
                     .tx
                     .send(request.clone())
                     .expect("assigner task should never die");
-                if let Some(response) = connection.rx.recv().await {
-                    break response;
+                match connection.rx.recv().await {
+                    Some(response) => return response,
+                    None => {
+                        tracing::error!("Connection to runner was lost before it sent a response")
+                    }
                 }
             },
             HandlerState::OrchestratorAndRunner(semaphore) => {
