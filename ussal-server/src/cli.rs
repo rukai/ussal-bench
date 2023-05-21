@@ -4,8 +4,13 @@ use clap::{Parser, Subcommand};
 #[derive(Subcommand)]
 pub enum Mode {
     Runner {
+        /// The address of the orchestrator to take requests from
         #[clap(long, required = true)]
         address: String,
+
+        /// An arbitrary string containing the machine-type of this runner, the runner will only receive jobs that request this machine-type
+        #[clap(long, required = true)]
+        machine_type: String,
     },
     Orchestrator {
         /// Domains used in the letsencrypt certificate

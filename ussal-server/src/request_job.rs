@@ -1,8 +1,10 @@
+use crate::connection_assigner::Connection;
 use crate::AppState;
 use axum::extract::ws::WebSocket;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use std::sync::Arc;
+use ussal_shared::runner_protocol::{JobResponse, JobResponseType};
 
 pub async fn request_job(
     ws: WebSocketUpgrade,
@@ -12,24 +14,30 @@ pub async fn request_job(
 }
 
 async fn run_websocket(stream: WebSocket, state: Arc<AppState>) {
-    // let (tx, mut rx) = ussal_networking::axum::spawn_read_write_tasks::<
-    //     runner_proto::JobRequest,
-    //     runner_proto::JobResponse,
-    // >(stream)
-    // .await;
-    // tx.send(runner_proto::JobRequest {
-    //     job_id: Uuid::new_v4(),
-    //     binary: vec![],
-    //     ty: runner_proto::JobRequestType::ListBenches,
-    // })
-    // .unwrap();
-
-    // while let Some(response) = rx.recv().await {
-    //     tracing::info!("request_job received response: {:?}", response);
-    // }
     match &state.handler {
         crate::job_handler::HandlerState::Orchestrator(orch) => {
-            orch.connection_tx.send(stream).unwrap()
+            let (tx, mut rx) = ussal_networking::axum::spawn_read_write_tasks(stream).await;
+            let machine_type = match rx.recv().await {
+                Some(JobResponse {
+                    ty: JobResponseType::Handshake { machine_type },
+                    ..
+                }) => machine_type,
+                Some(x) => {
+                    tracing::error!("Expected handshake but was {x:?}");
+                    return;
+                }
+                None => {
+                    tracing::error!("Expected handshake but no message was received");
+                    return;
+                }
+            };
+            orch.connection_tx
+                .send(Connection {
+                    tx,
+                    rx,
+                    machine_type,
+                })
+                .unwrap();
         }
         crate::job_handler::HandlerState::OrchestratorAndRunner(_) => {
             panic!("external runners are not supported on OrchestratorAndRunner")

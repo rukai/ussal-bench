@@ -7,8 +7,9 @@ use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use ussal_shared::runner_protocol::{
     BenchComplete, JobRequest, JobRequestType, JobResponse, JobResponseType,
 };
+use uuid::Uuid;
 
-pub async fn runner(address: &str) {
+pub async fn runner(address: &str, machine_type: &str) {
     loop {
         let stream = match connect(address).await {
             Ok(stream) => stream,
@@ -23,6 +24,13 @@ pub async fn runner(address: &str) {
         };
         let (tx, mut rx) =
             ussal_networking::spawn_read_write_tasks::<JobResponse, JobRequest>(stream).await;
+        tx.send(JobResponse {
+            job_id: Uuid::new_v4(),
+            ty: JobResponseType::Handshake {
+                machine_type: machine_type.to_owned(),
+            },
+        })
+        .unwrap();
         if let Some(request) = rx.recv().await {
             tracing::info!("running job: {} {:?}", request.job_id, request.ty);
             let response = run_job_request(&request);

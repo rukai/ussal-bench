@@ -1,4 +1,3 @@
-use axum::extract::ws::WebSocket;
 use tokio::sync::{mpsc, oneshot};
 use ussal_shared::runner_protocol as runner_proto;
 
@@ -6,7 +5,7 @@ use ussal_shared::runner_protocol as runner_proto;
 pub struct Connection {
     pub tx: mpsc::UnboundedSender<runner_proto::JobRequest>,
     pub rx: mpsc::UnboundedReceiver<runner_proto::JobResponse>,
-    machine_type: String,
+    pub machine_type: String,
 }
 
 #[derive(Debug)]
@@ -17,7 +16,7 @@ pub struct Request {
 
 pub async fn task(
     mut request_rx: mpsc::UnboundedReceiver<Request>,
-    mut connection_rx: mpsc::UnboundedReceiver<WebSocket>,
+    mut connection_rx: mpsc::UnboundedReceiver<Connection>,
 ) {
     // The order of elements is important! This vec forms a FIFO and requests from the beginning are favored over later events.
     // This ensures that we complete benches from users that submitted first without getting distracted with benches that were submitted later on
@@ -32,12 +31,7 @@ pub async fn task(
                 return
             },
             connection = connection_rx.recv() => if let Some(connection) = connection {
-                let (tx, rx) = ussal_networking::axum::spawn_read_write_tasks(connection).await;
-                waiting_connections.push(Connection {
-                    tx,
-                    rx,
-                    machine_type: "memes".to_owned()
-                });
+                waiting_connections.push(connection);
             } else {
                 return
             }

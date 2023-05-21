@@ -36,7 +36,10 @@ async fn main() {
 
 async fn run(args: Args) {
     match &args.mode {
-        Mode::Runner { address } => runner::runner(address).await,
+        Mode::Runner {
+            address,
+            machine_type,
+        } => runner::runner(address, machine_type).await,
         Mode::Orchestrator { .. } => orchestrator(args, false).await,
         Mode::OrchestratorAndRunner { .. } => orchestrator(args, true).await,
         Mode::DestructivelyInstallRunner { .. } => install::install_runner(args),

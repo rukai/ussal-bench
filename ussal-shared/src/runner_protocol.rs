@@ -23,6 +23,7 @@ pub struct JobResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum JobResponseType {
+    Handshake { machine_type: String },
     RunBench(BenchComplete),
     ListBenches(Vec<String>),
     Error(String),
@@ -33,6 +34,7 @@ impl JobResponseType {
         match self {
             JobResponseType::RunBench(x) => Ok(x),
             JobResponseType::ListBenches(_) => Err("Unexpected response ListBenches".to_owned()),
+            JobResponseType::Handshake { .. } => Err("Unexpected handshake".to_owned()),
             JobResponseType::Error(err) => Err(err.clone()),
         }
     }
@@ -41,6 +43,7 @@ impl JobResponseType {
         match self {
             JobResponseType::ListBenches(benches) => Ok(benches),
             JobResponseType::RunBench(_) => Err("Unexpected response RunBench".to_owned()),
+            JobResponseType::Handshake { .. } => Err("Unexpected handshake".to_owned()),
             JobResponseType::Error(err) => Err(err.clone()),
         }
     }

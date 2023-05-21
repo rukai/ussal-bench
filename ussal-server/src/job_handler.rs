@@ -128,13 +128,13 @@ impl HandlerState {
 
 pub struct OrchestratorState {
     request_tx: UnboundedSender<Request>,
-    pub connection_tx: UnboundedSender<WebSocket>,
+    pub connection_tx: UnboundedSender<Connection>,
 }
 
 impl OrchestratorState {
     pub fn new(
         request_tx: UnboundedSender<Request>,
-        connection_tx: UnboundedSender<WebSocket>,
+        connection_tx: UnboundedSender<Connection>,
     ) -> OrchestratorState {
         OrchestratorState {
             request_tx,
