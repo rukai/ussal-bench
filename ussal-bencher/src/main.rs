@@ -2,6 +2,7 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 mod cli;
+mod config;
 mod gen_web;
 mod get_jobs;
 mod run_jobs;
@@ -58,14 +59,22 @@ async fn run() -> i32 {
 
     let args = Args::parse();
 
-    let jobs = match get_jobs::get_jobs(&args) {
+    let config = match config::Config::load() {
+        Ok(config) => config,
+        Err(err) => {
+            tracing::error!("Failed to load config: {err:?}");
+            return 1;
+        }
+    };
+
+    let jobs = match get_jobs::get_jobs(&args, &config) {
         Ok(jobs) => jobs,
         Err(err) => {
             tracing::error!("Failed to get benchmarks: {err}");
             return 1;
         }
     };
-    let job_results = match run_jobs::run_jobs(args, jobs).await {
+    let job_results = match run_jobs::run_jobs(args, config, jobs).await {
         Ok(results) => results,
         Err(err) => {
             tracing::error!("Failed to run remote benchmarks: {err}");

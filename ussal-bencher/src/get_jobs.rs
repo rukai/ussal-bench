@@ -1,10 +1,10 @@
-use crate::cli::Args;
+use crate::{cli::Args, config::Config};
 use anyhow::{anyhow, Result};
 use subprocess::{Exec, Redirection};
 use ussal_shared::orchestrator_protocol::JobRequest;
 use uuid::Uuid;
 
-pub fn get_jobs(args: &Args) -> Result<Vec<JobRequest>> {
+pub fn get_jobs(args: &Args, _config: &Config) -> Result<Vec<JobRequest>> {
     // Run the command to stdout once so the user can see it.
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     if !std::process::Command::new(&cargo)

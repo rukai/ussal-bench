@@ -1,0 +1,9 @@
+{
+    "address": "wss://rukai.ddns.net/run_job",
+    "runs": [
+        {
+            "machine_type": "memes",
+            "target_triple": "x86_64-unknown-linux-gnu"
+        }
+    ]
+}

@@ -63,7 +63,7 @@ jobs:
         cd ussal-bencher
         # The USSAL_TOKEN is unique per user and can be revoked individually
         # We then internally use TLS with letsencrypt to encrypt and authenticate the server.
-        cargo run --release -- --address wss://rukai.ddns.net/run_job --auth-token ${{ secrets.USSAL_TOKEN }}
+        cargo run --release -- --auth-token ${{ secrets.USSAL_TOKEN }}
     - name: Upload pages
       uses: actions/upload-pages-artifact@v1
       with:
