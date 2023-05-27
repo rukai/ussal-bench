@@ -68,7 +68,7 @@ pub fn run_job_request(request: &JobRequest) -> JobResponse {
 
             let benches: Vec<String> = output
                 .lines()
-                .filter_map(|line| line.strip_suffix(": bench").map(|x| x.to_owned()))
+                .filter_map(|line| line.strip_suffix(": benchmark").map(|x| x.to_owned()))
                 .collect();
             JobResponse {
                 job_id: request.job_id,

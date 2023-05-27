@@ -27,7 +27,7 @@ serde.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
-criterion = "0.4.0"
+criterion = "0.5.0"
 glam = "0.24.0"
 serial_test = "2.0.0"
 
