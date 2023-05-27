@@ -86,65 +86,32 @@ async fn run() -> i32 {
         .map(|job| Bench {
             name: job.bench_name,
             keys: HashMap::from([("type".to_owned(), "walltime (ns)".to_owned())]),
-            measurements: vec![
-                BenchMeasurement { value: 0.0 },
-                BenchMeasurement {
-                    value: job.wall_time,
-                },
-            ],
+            measurements: vec![BenchMeasurement {
+                value: job.wall_time,
+            }],
         })
         .collect();
 
-    let results = BenchArchive::new(
-        "Ussal Example Benchmarks".to_owned(),
-        vec![
-            Bench {
-                name: "CoolBench".to_owned(),
-                keys: HashMap::from([("type".to_owned(), "instructions".to_owned())]),
-                measurements: vec![
-                    BenchMeasurement { value: 1.0 },
-                    BenchMeasurement { value: 1.2 },
-                    BenchMeasurement { value: 1.3 },
-                    BenchMeasurement { value: 1.7 },
-                    BenchMeasurement { value: 1.5 },
-                ],
-            },
-            Bench {
-                name: "CoolBench".to_owned(),
-                keys: HashMap::from([("type".to_owned(), "walltime".to_owned())]),
-                measurements: vec![
-                    BenchMeasurement { value: 1.0 },
-                    BenchMeasurement { value: 0.8 },
-                ],
-            },
-            Bench {
-                name: "SadBench".to_owned(),
-                keys: HashMap::from([("type".to_owned(), "instructions".to_owned())]),
-                measurements: vec![
-                    BenchMeasurement { value: 10000.0 },
-                    BenchMeasurement { value: 10. },
-                ],
-            },
-            Bench {
-                name: "SadBench".to_owned(),
-                keys: HashMap::from([("type".to_owned(), "walltime".to_owned())]),
-                measurements: vec![
-                    BenchMeasurement { value: 10.0 },
-                    BenchMeasurement { value: 10.0 },
-                    BenchMeasurement { value: 15. },
-                ],
-            },
-        ]
-        .into_iter()
-        .chain(benches.into_iter())
-        .collect(),
-    );
+    let results = BenchArchive::new("Ussal Example Benchmarks".to_owned(), benches);
 
+    // TODO: non CI mode
+    results.save("bench.cbor");
+
+    // TODO: CI mode
     // TODO: handle unwraps
     gen_web::generate_web();
-    results.save("bench_ci_web_root/bench_history.cbor");
-
-    results.save("bench.cbor");
+    let history = match BenchArchive::load("bench_ci_web_root/bench_history.cbor") {
+        Ok(mut history) => {
+            history.insert(results);
+            history
+        }
+        Err(err) => {
+            // TODO: file not existing should not be a warn
+            tracing::warn!("Failed to load history, history is starting from scratch: {err:?}");
+            results
+        }
+    };
+    history.save("bench_ci_web_root/bench_history.cbor");
 
     0
 }

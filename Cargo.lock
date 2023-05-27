@@ -4438,6 +4438,7 @@ dependencies = [
 name = "ussal_shared"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "getrandom 0.2.9",
  "serde",
  "serde_cbor",

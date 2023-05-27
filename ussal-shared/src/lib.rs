@@ -4,6 +4,7 @@
 pub mod orchestrator_protocol;
 pub mod runner_protocol;
 
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -43,8 +44,26 @@ impl BenchArchive {
         }
     }
 
-    pub fn load(name: &str) -> Self {
-        serde_cbor::from_slice(&std::fs::read(name).unwrap()).unwrap()
+    pub fn insert(&mut self, new_archive: BenchArchive) {
+        for new_bench in new_archive.benches {
+            for bench in &mut self.benches {
+                if bench.keys == new_bench.keys && bench.name == new_bench.name {
+                    bench
+                        .measurements
+                        .extend(new_bench.measurements.into_iter());
+                    break;
+                }
+            }
+        }
+    }
+
+    pub fn load(path: &str) -> Result<Self> {
+        // TODO: retain backwards compatibility by performing format upgrades here
+        serde_cbor::from_slice(
+            &std::fs::read(path)
+                .map_err(|e| anyhow!(e).context(format!("Failed to read {path:?} from disk")))?,
+        )
+        .map_err(|e| anyhow!(e).context(format!("Failed to parse {path:?} as json")))
     }
 
     pub fn load_from_cbor(bytes: &[u8]) -> Self {
