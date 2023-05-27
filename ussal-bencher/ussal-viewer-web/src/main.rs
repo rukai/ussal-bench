@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 
+use eframe::WebRunner;
 use js_sys::Uint8Array;
 use ussal_shared::BenchArchive;
 use ussal_viewer::App;
@@ -13,9 +14,6 @@ pub fn main() {
 }
 
 async fn run() {
-    // Make sure panics are logged using `console.error`.
-    console_error_panic_hook::set_once();
-
     // Redirect tracing to console.log and friends:
     tracing_wasm::set_as_global_default();
 
@@ -41,13 +39,15 @@ async fn run() {
     let raw_cbor = get_bench_history().await;
     let archive = BenchArchive::load_from_cbor(&raw_cbor);
 
-    eframe::start_web(
-        "the-id",
-        eframe::WebOptions::default(),
-        Box::new(|cc| Box::new(crate::App::new(cc, archive))),
-    )
-    .await
-    .unwrap();
+    let runner = WebRunner::new();
+    runner
+        .start(
+            "the-id",
+            eframe::WebOptions::default(),
+            Box::new(|cc| Box::new(crate::App::new(cc, archive))),
+        )
+        .await
+        .unwrap();
 }
 
 async fn get_bench_history() -> Vec<u8> {
