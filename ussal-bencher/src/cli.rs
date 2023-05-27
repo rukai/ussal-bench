@@ -11,4 +11,8 @@ pub struct Args {
     /// Authorization token
     #[clap(long)]
     pub auth_token: uuid::Uuid,
+
+    /// Authorization token
+    #[clap(long)]
+    pub ci: bool,
 }

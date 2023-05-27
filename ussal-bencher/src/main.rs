@@ -74,7 +74,7 @@ async fn run() -> i32 {
             return 1;
         }
     };
-    let job_results = match run_jobs::run_jobs(args, config, jobs).await {
+    let job_results = match run_jobs::run_jobs(&args, config, jobs).await {
         Ok(results) => results,
         Err(err) => {
             tracing::error!("Failed to run remote benchmarks: {err}");
@@ -94,24 +94,24 @@ async fn run() -> i32 {
 
     let results = BenchArchive::new("Ussal Example Benchmarks".to_owned(), benches);
 
-    // TODO: non CI mode
-    results.save("bench.cbor");
-
-    // TODO: CI mode
-    // TODO: handle unwraps
-    gen_web::generate_web();
-    let history = match BenchArchive::load("bench_ci_web_root/bench_history.cbor") {
-        Ok(mut history) => {
-            history.insert(results);
-            history
-        }
-        Err(err) => {
-            // TODO: file not existing should not be a warn
-            tracing::warn!("Failed to load history, history is starting from scratch: {err:?}");
-            results
-        }
-    };
-    history.save("bench_ci_web_root/bench_history.cbor");
+    if args.ci {
+        // TODO: handle unwraps
+        gen_web::generate_web();
+        let history = match BenchArchive::load("bench_ci_web_root/bench_history.cbor") {
+            Ok(mut history) => {
+                history.insert(results);
+                history
+            }
+            Err(err) => {
+                // TODO: file not existing should not be a warn
+                tracing::warn!("Failed to load history, history is starting from scratch: {err:?}");
+                results
+            }
+        };
+        history.save("bench_ci_web_root/bench_history.cbor");
+    } else {
+        results.save("bench.cbor");
+    }
 
     0
 }

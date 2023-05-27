@@ -12,15 +12,15 @@ pub struct JobResult {
 }
 
 pub async fn run_jobs(
-    args: Args,
+    args: &Args,
     config: Config,
     jobs: Vec<JobRequest>,
 ) -> Result<impl Iterator<Item = BenchComplete>> {
     assert!(!jobs.is_empty(), "jobs must contain values otherwise we will deadlock waiting for a response that will never come");
     let mut job_results = HashMap::new();
 
-    let uri = args.address.unwrap_or(config.address);
-    let (ws_stream, _) = timeout(Duration::from_secs(10), connect_async(&uri))
+    let uri = args.address.as_ref().unwrap_or(&config.address);
+    let (ws_stream, _) = timeout(Duration::from_secs(10), connect_async(uri))
         .await
         .map_err(|_| anyhow!("Timed out connecting to {uri} after 10 seconds"))?
         .map_err(|e| anyhow!(e).context(format!("Failed to connect to {uri}")))?;
