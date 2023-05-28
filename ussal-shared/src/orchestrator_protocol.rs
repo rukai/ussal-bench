@@ -6,8 +6,7 @@ pub struct JobRequest {
     pub auth_token: Uuid,
     pub job_id: Uuid,
     pub binary: Vec<u8>,
-    pub os: String,
-    pub arch: String,
+    pub machine_type: String,
 }
 
 /// Multiple JobResponses will be sent per JobRequest

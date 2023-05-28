@@ -1,67 +1,67 @@
 use crate::{cli::Args, config::Config};
 use anyhow::{anyhow, Result};
-use subprocess::{Exec, Redirection};
+use cargo_metadata::{Message, MetadataCommand};
+use std::process::{Command, Stdio};
 use ussal_shared::orchestrator_protocol::JobRequest;
 use uuid::Uuid;
 
-pub fn get_jobs(args: &Args, _config: &Config) -> Result<Vec<JobRequest>> {
+pub fn get_jobs(args: &Args, config: &Config) -> Result<Vec<JobRequest>> {
     // Run the command to stdout once so the user can see it.
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
-    if !std::process::Command::new(&cargo)
-        .args(["bench", "--no-run"])
-        .status()
-        .unwrap()
-        .success()
-    {
-        return Err(anyhow!(""));
-    }
-    // Run the command again, this time capturing the output
-    // `--color never` is critical for our hacky parser below
-    let output = run_command(&cargo, &["bench", "--no-run", "--color", "never"])?;
     let mut jobs = vec![];
-    for line in output.lines() {
-        if line.trim().starts_with("Executable") {
-            let mut iter = line.rsplit(|c| c == '(' || c == ')');
-            iter.next()
-                .ok_or_else(|| anyhow!("Unexpected 'Executable' line {line}"))?;
-            let path = iter
-                .next()
-                .ok_or_else(|| anyhow!("Unexpected 'Executable' line {line}"))?;
-            jobs.push(JobRequest {
-                auth_token: args.auth_token,
-                job_id: Uuid::new_v4(),
-                binary: std::fs::read(path)?,
-                os: "linux".to_owned(),
-                arch: "x86_64".to_owned(),
-            })
+
+    for run in &config.runs {
+        println!("Building benches for {:?}", run.target_triple);
+        let mut target_dir = MetadataCommand::new().exec().unwrap().target_directory;
+        target_dir.push(format!("ussal_target_{}", &run.target_triple));
+        let mut command = Command::new(&cargo)
+            .args([
+                "build",
+                "--benches",
+                "--profile",
+                "bench",
+                "--target",
+                &run.target_triple,
+                "--message-format=json-render-diagnostics",
+                // It is common to setup a faster linker such as mold or lld to run for just your native target.
+                // It cant be set for some targets as they dont support building with these linkers.
+                // This results in a separate rustflags value for native and other targets.
+                // Currently rust triggers a full rebuild every time the rustflags value changes.
+                //
+                // Therefore we have this hack where we use a different target dir for each target-triple to avoid constantly triggering full rebuilds.
+                // When this issue is resolved we might be able to remove this hack: https://github.com/rust-lang/cargo/issues/8716
+                "--target-dir",
+                target_dir.as_ref(),
+            ])
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let reader = std::io::BufReader::new(command.stdout.take().unwrap());
+        for message in cargo_metadata::Message::parse_stream(reader) {
+            if let Message::CompilerArtifact(artifact) = message.unwrap() {
+                if artifact.target.is_bench() {
+                    if let Some(binary) = artifact.executable {
+                        jobs.push(JobRequest {
+                            auth_token: args.auth_token,
+                            job_id: Uuid::new_v4(),
+                            binary: std::fs::read(binary)?,
+                            machine_type: run.machine_type.clone(),
+                        })
+                    }
+                }
+            }
+        }
+
+        let output = command.wait().expect("Couldn't get cargo's exit status");
+        if !output.success() {
+            return Err(anyhow!("cargo build failed"));
+        }
+
+        if jobs.is_empty() {
+            return Err(anyhow!("No benchmarks found"));
         }
     }
 
-    if jobs.is_empty() {
-        return Err(anyhow!("No benchmarks found"));
-    }
-
     Ok(jobs)
-}
-
-/// Runs a command and returns the output as a string.
-/// Both stderr and stdout are returned in the result.
-pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
-    let data = Exec::cmd(command)
-        .args(args)
-        .stdout(Redirection::Pipe)
-        .stderr(Redirection::Merge)
-        .capture()?;
-
-    if data.exit_status.success() {
-        Ok(data.stdout_str())
-    } else {
-        Err(anyhow!(
-            "command {} {:?} exited with {:?} and output:\n{}",
-            command,
-            args,
-            data.exit_status,
-            data.stdout_str()
-        ))
-    }
 }

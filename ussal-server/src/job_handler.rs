@@ -55,12 +55,16 @@ async fn process_request(
         binary: request.binary.clone(),
         ty: runner_proto::JobRequestType::ListBenches,
     };
-    let job_response = state.handler.run_job_request(list_request).await;
+    let job_response = state
+        .handler
+        .run_job_request(list_request, &request.machine_type)
+        .await;
     let benches = job_response.ty.get_list_benches().unwrap();
 
     let run = benches.iter().map(|bench| {
         let tx = tx.clone();
         async move {
+            let machine_type = &request.machine_type;
             let request = runner_proto::JobRequest {
                 job_id: request.job_id,
                 binary: request.binary.clone(),
@@ -68,7 +72,7 @@ async fn process_request(
                     bench_name: bench.clone(),
                 },
             };
-            let job_response = state.handler.run_job_request(request).await;
+            let job_response = state.handler.run_job_request(request, machine_type).await;
             let response = orch_proto::JobResponse {
                 job_id: job_response.job_id,
                 result: job_response
@@ -104,10 +108,11 @@ impl HandlerState {
     async fn run_job_request(
         &self,
         request: runner_proto::JobRequest,
+        machine_type: &str,
     ) -> runner_proto::JobResponse {
         match self {
             HandlerState::Orchestrator(state) => loop {
-                let mut connection = state.get_connection(&request).await;
+                let mut connection = state.get_connection(machine_type).await;
                 connection
                     .tx
                     .send(request.clone())
@@ -146,12 +151,12 @@ impl OrchestratorState {
     }
 
     /// pop a connection off the list of available connections
-    async fn get_connection(&self, _request: &runner_proto::JobRequest) -> Connection {
+    async fn get_connection(&self, machine_type: &str) -> Connection {
         // Filter connections by request.os and request.arch
         let (tx, rx) = oneshot::channel();
         self.request_tx
             .send(Request {
-                machine_type: "memes".to_owned(),
+                machine_type: machine_type.to_owned(),
                 tx,
             })
             .unwrap();
