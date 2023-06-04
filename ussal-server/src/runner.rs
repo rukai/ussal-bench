@@ -78,7 +78,7 @@ pub fn run_job_request(request: &JobRequest) -> JobResponse {
         JobRequestType::RunBench { bench_name } => {
             let output = run_command(
                 "/home/ussal-server/binary-under-test",
-                &["--bench", bench_name],
+                &["--bench", "--exact", bench_name],
             )
             .unwrap();
 
