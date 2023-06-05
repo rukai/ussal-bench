@@ -22,15 +22,15 @@ struct FilterKey {
 
 pub struct App {
     archive: BenchArchive,
-    filters: Vec<FilterKey>,
+    filter_keys: Vec<FilterKey>,
 }
 
 impl App {
     pub fn new(_cc: &eframe::CreationContext<'_>, archive: BenchArchive) -> Self {
-        let mut filters: Vec<FilterKey> = vec![];
+        let mut filter_keys: Vec<FilterKey> = vec![];
         for bench in &archive.benches {
             for (key, value) in &bench.keys {
-                if let Some(filter_key) = filters.iter_mut().find(|x| &x.name == key) {
+                if let Some(filter_key) = filter_keys.iter_mut().find(|x| &x.name == key) {
                     if !filter_key.values.iter().any(|x| &x.name == value) {
                         filter_key.values.push(FilterValue {
                             name: value.to_owned(),
@@ -38,7 +38,7 @@ impl App {
                         })
                     }
                 } else {
-                    filters.push(FilterKey {
+                    filter_keys.push(FilterKey {
                         name: key.to_owned(),
                         values: vec![FilterValue {
                             name: value.to_owned(),
@@ -49,7 +49,10 @@ impl App {
             }
         }
 
-        Self { archive, filters }
+        Self {
+            archive,
+            filter_keys,
+        }
     }
 }
 
@@ -68,7 +71,7 @@ impl eframe::App for App {
         });
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            for filter_key in &mut self.filters {
+            for filter_key in &mut self.filter_keys {
                 ui.heading(&filter_key.name);
                 for value in &mut filter_key.values {
                     ui.toggle_value(&mut value.show, &value.name);
@@ -81,7 +84,7 @@ impl eframe::App for App {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (i, result) in self.archive.benches.iter().enumerate() {
-                        plot_bench(ui, result, i as i32);
+                        plot_bench(ui, result, i as i32, &self.filter_keys);
                     }
                 })
             });
@@ -97,7 +100,15 @@ impl eframe::App for App {
     }
 }
 
-fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32) {
+fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32, filter_keys: &[FilterKey]) {
+    for (key, value) in &bench.keys {
+        let filter_key = filter_keys.iter().find(|x| &x.name == key).unwrap();
+        let filter_value = filter_key.values.iter().find(|x| &x.name == value).unwrap();
+        if !filter_value.show {
+            return;
+        }
+    }
+
     //ui.vertical(|ui| {
     //ui.label(&bench.name);
 
