@@ -10,8 +10,9 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct BenchArchive {
-    version: i64,
-    pub name: String,
+    version: u32,
+    reset_id: u32,
+    pub title: String,
     pub benches: Vec<Bench>,
 }
 
@@ -39,8 +40,16 @@ impl BenchArchive {
     pub fn new(name: String, benches: Vec<Bench>) -> Self {
         BenchArchive {
             version: 0,
-            name,
+            reset_id: 0,
+            title: name,
             benches,
+        }
+    }
+
+    pub fn reset_if_mismatch(&mut self, reset_id: u32) {
+        if reset_id != self.reset_id {
+            self.benches.clear();
+            self.reset_id = reset_id;
         }
     }
 

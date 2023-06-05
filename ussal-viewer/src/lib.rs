@@ -77,7 +77,7 @@ impl eframe::App for App {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(&self.archive.name);
+            ui.heading(&self.archive.title);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (i, result) in self.archive.benches.iter().enumerate() {

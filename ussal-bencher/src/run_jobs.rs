@@ -14,7 +14,7 @@ pub struct JobResult {
 
 pub async fn run_jobs(
     args: &Args,
-    config: Config,
+    config: &Config,
     jobs: Vec<JobRequest>,
 ) -> Result<impl Iterator<Item = JobResult>> {
     assert!(!jobs.is_empty(), "jobs must contain values otherwise we will deadlock waiting for a response that will never come");

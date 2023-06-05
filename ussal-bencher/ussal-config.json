@@ -1,8 +1,10 @@
 {
+    "title": "Ussal Example benches",
     "address": "wss://rukai.ddns.net/run_job",
+    "reset_ci_history": 0,
     "runs": [
         {
-            "machine_type": "memes",
+            "machine_type": "x86_64-linux-memes",
             "target_triple": "x86_64-unknown-linux-gnu"
         }
     ]

@@ -73,7 +73,7 @@ async fn run() -> i32 {
             return 1;
         }
     };
-    let job_results = match run_jobs::run_jobs(&args, config, jobs).await {
+    let job_results = match run_jobs::run_jobs(&args, &config, jobs).await {
         Ok(results) => results,
         Err(err) => {
             tracing::error!("Failed to run remote benchmarks: {err}");
@@ -98,13 +98,15 @@ async fn run() -> i32 {
         })
         .collect();
 
-    let results = BenchArchive::new("Ussal Example Benchmarks".to_owned(), benches);
+    let results = BenchArchive::new(config.title.to_owned(), benches);
 
     if args.ci {
         // TODO: handle unwraps
         gen_web::generate_web();
         let history = match BenchArchive::load("bench_ci_web_root/bench_history.cbor") {
             Ok(mut history) => {
+                history.title = config.title;
+                history.reset_if_mismatch(config.reset_ci_history);
                 history.insert(results);
                 history
             }
