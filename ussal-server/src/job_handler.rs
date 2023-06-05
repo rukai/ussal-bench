@@ -81,6 +81,9 @@ async fn process_request(
                     .map(|x| {
                         orch_proto::JobResult::BenchComplete(orch_proto::BenchComplete {
                             bench_name: bench.clone(),
+                            keys: [("type".to_owned(), "walltime (ns)".to_owned())]
+                                .into_iter()
+                                .collect(),
                             wall_time: x.wall_time,
                         })
                     })

@@ -8,14 +8,15 @@ use ussal_shared::orchestrator_protocol::{BenchComplete, JobRequest};
 #[derive(Debug)]
 pub struct JobResult {
     finished: bool,
-    benches: Vec<BenchComplete>,
+    pub machine_type: String,
+    pub benches: Vec<BenchComplete>,
 }
 
 pub async fn run_jobs(
     args: &Args,
     config: Config,
     jobs: Vec<JobRequest>,
-) -> Result<impl Iterator<Item = BenchComplete>> {
+) -> Result<impl Iterator<Item = JobResult>> {
     assert!(!jobs.is_empty(), "jobs must contain values otherwise we will deadlock waiting for a response that will never come");
     let mut job_results = HashMap::new();
 
@@ -36,6 +37,7 @@ pub async fn run_jobs(
             job.job_id,
             JobResult {
                 finished: false,
+                machine_type: job.machine_type.clone(),
                 benches: vec![],
             },
         );
@@ -66,9 +68,7 @@ pub async fn run_jobs(
             ussal_shared::orchestrator_protocol::JobResult::JobError(e) => return Err(anyhow!(e)),
         }
         if job_results.values().all(|x| x.finished) {
-            return Ok(job_results
-                .into_values()
-                .flat_map(|x| x.benches.into_iter()));
+            return Ok(job_results.into_values());
         }
     }
 

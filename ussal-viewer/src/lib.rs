@@ -119,7 +119,11 @@ fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32) {
         plot_ui.line(
             egui::plot::Line::new(line)
                 .color(egui::Color32::from_rgb(100, 200, 100))
-                .name(bench.keys.get("type").unwrap()),
+                .name(format!(
+                    "{}-{}",
+                    bench.keys.get("machine").unwrap(),
+                    bench.keys.get("type").unwrap(),
+                )),
         );
         plot_ui.text(
             Text::new(

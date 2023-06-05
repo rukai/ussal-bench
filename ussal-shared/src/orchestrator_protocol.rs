@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,4 +33,5 @@ pub enum JobResult {
 pub struct BenchComplete {
     pub bench_name: String,
     pub wall_time: f32,
+    pub keys: HashMap<String, String>,
 }

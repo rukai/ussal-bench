@@ -9,7 +9,6 @@ mod run_jobs;
 
 use clap::Parser;
 use cli::Args;
-use std::collections::HashMap;
 use ussal_shared::{Bench, BenchArchive, BenchMeasurement};
 
 /// `cargo bench`
@@ -83,12 +82,19 @@ async fn run() -> i32 {
     };
 
     let benches: Vec<Bench> = job_results
-        .map(|job| Bench {
-            name: job.bench_name,
-            keys: HashMap::from([("type".to_owned(), "walltime (ns)".to_owned())]),
-            measurements: vec![BenchMeasurement {
-                value: job.wall_time,
-            }],
+        .flat_map(|job| {
+            let machine_type = job.machine_type;
+            job.benches.into_iter().map(move |bench| Bench {
+                name: bench.bench_name,
+                keys: {
+                    let mut keys = bench.keys;
+                    keys.insert("machine".to_owned(), machine_type.clone());
+                    keys
+                },
+                measurements: vec![BenchMeasurement {
+                    value: bench.wall_time,
+                }],
+            })
         })
         .collect();
 
