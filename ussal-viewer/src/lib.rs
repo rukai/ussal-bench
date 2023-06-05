@@ -1,14 +1,55 @@
-use eframe::egui::{self};
+use eframe::{
+    egui::{
+        self,
+        plot::{PlotPoint, Text},
+        RichText,
+    },
+    emath::Align2,
+    epaint::Color32,
+};
 use egui::plot::{Legend, Plot};
 use ussal_shared::{Bench, BenchArchive};
 
+struct FilterValue {
+    name: String,
+    show: bool,
+}
+
+struct FilterKey {
+    name: String,
+    values: Vec<FilterValue>,
+}
+
 pub struct App {
     archive: BenchArchive,
+    filters: Vec<FilterKey>,
 }
 
 impl App {
     pub fn new(_cc: &eframe::CreationContext<'_>, archive: BenchArchive) -> Self {
-        Self { archive }
+        let mut filters: Vec<FilterKey> = vec![];
+        for bench in &archive.benches {
+            for (key, value) in &bench.keys {
+                if let Some(filter_key) = filters.iter_mut().find(|x| &x.name == key) {
+                    if !filter_key.values.iter().any(|x| &x.name == value) {
+                        filter_key.values.push(FilterValue {
+                            name: value.to_owned(),
+                            show: true,
+                        })
+                    }
+                } else {
+                    filters.push(FilterKey {
+                        name: key.to_owned(),
+                        values: vec![FilterValue {
+                            name: value.to_owned(),
+                            show: true,
+                        }],
+                    })
+                }
+            }
+        }
+
+        Self { archive, filters }
     }
 }
 
@@ -27,14 +68,11 @@ impl eframe::App for App {
         });
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.heading("something");
-        });
-
-        egui::SidePanel::right("right_panel").show(ctx, |ui| {
-            ui.heading("Right Panel");
-
-            if ui.button("do something").clicked() {
-                todo!();
+            for filter_key in &mut self.filters {
+                ui.heading(&filter_key.name);
+                for value in &mut filter_key.values {
+                    ui.toggle_value(&mut value.show, &value.name);
+                }
             }
         });
 
@@ -60,8 +98,8 @@ impl eframe::App for App {
 }
 
 fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32) {
-    // TODO: couldnt get this playing nicely, lets just directly implement the desired legend header directly into egui
-    //ui.label(&result.name);
+    //ui.vertical(|ui| {
+    //ui.label(&bench.name);
 
     let plot = Plot::new(id)
         .legend(Legend::default())
@@ -83,5 +121,14 @@ fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32) {
                 .color(egui::Color32::from_rgb(100, 200, 100))
                 .name(bench.keys.get("type").unwrap()),
         );
+        plot_ui.text(
+            Text::new(
+                PlotPoint::new(0.0, 0.0),
+                RichText::new(format!(" {}", bench.name)).size(17.0),
+            )
+            .anchor(Align2::LEFT_BOTTOM)
+            .color(Color32::WHITE),
+        );
     });
+    // });
 }
