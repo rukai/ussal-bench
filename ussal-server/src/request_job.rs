@@ -4,7 +4,7 @@ use axum::extract::ws::WebSocket;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use std::sync::Arc;
-use ussal_shared::runner_protocol::{JobResponse, JobResponseType};
+use ussal_networking::runner_protocol::{JobResponse, JobResponseType};
 
 pub async fn request_job(
     ws: WebSocketUpgrade,

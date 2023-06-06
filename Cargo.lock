@@ -4444,6 +4444,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.19.0",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -4484,7 +4485,6 @@ dependencies = [
  "getrandom 0.2.9",
  "serde",
  "serde_cbor",
- "uuid",
 ]
 
 [[package]]

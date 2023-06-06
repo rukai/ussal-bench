@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use std::{collections::HashMap, time::Duration};
 use tokio::time::timeout;
 use tokio_tungstenite::connect_async;
-use ussal_shared::orchestrator_protocol::{BenchComplete, JobRequest};
+use ussal_networking::orchestrator_protocol::{BenchComplete, JobRequest};
 
 #[derive(Debug)]
 pub struct JobResult {
@@ -27,8 +27,8 @@ pub async fn run_jobs(
         .map_err(|e| anyhow!(e).context(format!("Failed to connect to {uri}")))?;
     tracing::info!("WebSocket handshake has been successfully completed");
     let (tx, mut rx) = ussal_networking::spawn_read_write_tasks::<
-        ussal_shared::orchestrator_protocol::JobRequest,
-        ussal_shared::orchestrator_protocol::JobResponse,
+        ussal_networking::orchestrator_protocol::JobRequest,
+        ussal_networking::orchestrator_protocol::JobResponse,
     >(ws_stream)
     .await;
 
@@ -46,7 +46,7 @@ pub async fn run_jobs(
 
     while let Some(response) = rx.recv().await {
         match response.result {
-            ussal_shared::orchestrator_protocol::JobResult::BenchComplete(bench) => {
+            ussal_networking::orchestrator_protocol::JobResult::BenchComplete(bench) => {
                 if let Some(job) = job_results.get_mut(&response.job_id) {
                     tracing::info!("{:?}", bench);
                     job.benches.push(bench);
@@ -54,18 +54,20 @@ pub async fn run_jobs(
                     return Err(anyhow!("BenchComplete contained unknown job_id"));
                 }
             }
-            ussal_shared::orchestrator_protocol::JobResult::BenchError(e) => {
+            ussal_networking::orchestrator_protocol::JobResult::BenchError(e) => {
                 // TODO: Fail only bench
                 return Err(anyhow!(e));
             }
-            ussal_shared::orchestrator_protocol::JobResult::JobComplete => {
+            ussal_networking::orchestrator_protocol::JobResult::JobComplete => {
                 if let Some(job) = job_results.get_mut(&response.job_id) {
                     job.finished = true;
                 } else {
                     return Err(anyhow!("JobComplete contained unknown job_id"));
                 }
             }
-            ussal_shared::orchestrator_protocol::JobResult::JobError(e) => return Err(anyhow!(e)),
+            ussal_networking::orchestrator_protocol::JobResult::JobError(e) => {
+                return Err(anyhow!(e))
+            }
         }
         if job_results.values().all(|x| x.finished) {
             return Ok(job_results.into_values());

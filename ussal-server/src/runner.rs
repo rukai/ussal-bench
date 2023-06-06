@@ -4,7 +4,7 @@ use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
-use ussal_shared::runner_protocol::{
+use ussal_networking::runner_protocol::{
     BenchComplete, JobRequest, JobRequestType, JobResponse, JobResponseType,
 };
 use uuid::Uuid;

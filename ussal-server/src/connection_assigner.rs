@@ -1,5 +1,5 @@
 use tokio::sync::{mpsc, oneshot};
-use ussal_shared::runner_protocol as runner_proto;
+use ussal_networking::runner_protocol as runner_proto;
 
 #[derive(Debug)]
 pub struct Connection {

@@ -8,6 +8,5 @@ edition = "2021"
 [dependencies]
 serde.workspace = true
 serde_cbor.workspace = true
-uuid.workspace = true
 getrandom = { version = "0.2.9", features = ["js"] }
 anyhow.workspace = true

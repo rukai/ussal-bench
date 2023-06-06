@@ -2,7 +2,7 @@ use crate::{cli::Args, config::Config};
 use anyhow::{anyhow, Result};
 use cargo_metadata::{Message, MetadataCommand};
 use std::process::{Command, Stdio};
-use ussal_shared::orchestrator_protocol::JobRequest;
+use ussal_networking::orchestrator_protocol::JobRequest;
 use uuid::Uuid;
 
 pub fn get_jobs(args: &Args, config: &Config) -> Result<Vec<JobRequest>> {

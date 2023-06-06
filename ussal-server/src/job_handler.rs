@@ -7,8 +7,8 @@ use futures::future::join_all;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::{oneshot, Semaphore};
-use ussal_shared::orchestrator_protocol as orch_proto;
-use ussal_shared::runner_protocol as runner_proto;
+use ussal_networking::orchestrator_protocol as orch_proto;
+use ussal_networking::runner_protocol as runner_proto;
 
 pub async fn run_job(
     ws: WebSocketUpgrade,

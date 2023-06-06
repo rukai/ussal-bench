@@ -1,9 +1,6 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 
-pub mod orchestrator_protocol;
-pub mod runner_protocol;
-
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
