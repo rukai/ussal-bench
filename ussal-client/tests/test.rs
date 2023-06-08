@@ -49,6 +49,7 @@ mod test {
                 "--domains",
                 "deletethis",
             ],
+            None,
         )
         .await;
 
