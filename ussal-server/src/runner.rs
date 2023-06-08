@@ -1,4 +1,4 @@
-use crate::system::run_command;
+use crate::system::{run_command, run_sandboxed_binary};
 use anyhow::{anyhow, Result};
 use std::time::Duration;
 use tokio::net::TcpStream;
@@ -60,7 +60,7 @@ pub fn run_job_request(request: &JobRequest) -> JobResponse {
     match &request.ty {
         JobRequestType::ListBenches => {
             // `cargo bench` automatically adds in the `--bench`
-            let output = run_command(
+            let output = run_sandboxed_binary(
                 "/home/ussal-server/binary-under-test",
                 &["--bench", "--list"],
             )
@@ -76,9 +76,15 @@ pub fn run_job_request(request: &JobRequest) -> JobResponse {
             }
         }
         JobRequestType::RunBench { bench_name } => {
-            let output = run_command(
+            let output = run_sandboxed_binary(
                 "/home/ussal-server/binary-under-test",
-                &["--bench", "--exact", bench_name],
+                &[
+                    "--bench",
+                    "--exact",
+                    bench_name,
+                    "--noplot",
+                    "--discard-baseline",
+                ],
             )
             .unwrap();
 

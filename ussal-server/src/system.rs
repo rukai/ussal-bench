@@ -25,6 +25,34 @@ pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
     }
 }
 
+/// Runs a binary in an nsjail and returns the output as a string.
+/// Both stderr and stdout are returned in the result.
+///
+pub fn run_sandboxed_binary(command: &str, args: &[&str]) -> Result<String> {
+    let mut nsjail_args = vec![
+        "--really_quiet",
+        "--mode",
+        "o",
+        "--user",
+        "99999",
+        "--group",
+        "99999",
+        "--keep_caps",
+        "-R",
+        "/usr/lib",
+        "-R",
+        "/lib64",
+        "-R",
+        "/dev/urandom",
+        "-R",
+        "/home/ussal-server/binary-under-test",
+        "--",
+        command,
+    ];
+    nsjail_args.extend(args);
+    run_command("nsjail", &nsjail_args)
+}
+
 pub fn init_tracing(format: LogFormat) -> WorkerGuard {
     let (non_blocking, guard) = tracing_appender::non_blocking(std::io::stdout());
 
