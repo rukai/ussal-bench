@@ -27,7 +27,6 @@ pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
 
 /// Runs a binary in an nsjail and returns the output as a string.
 /// Both stderr and stdout are returned in the result.
-///
 pub fn run_sandboxed_binary(command: &str, args: &[&str]) -> Result<String> {
     let mut nsjail_args = vec![
         "--really_quiet",

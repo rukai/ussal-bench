@@ -18,7 +18,7 @@ mod test {
             &[
                 "run",
                 "-p",
-                "ussal-bencher",
+                "ussal-client",
                 "--",
                 "--address",
                 "ws://localhost:8000/run_job",
@@ -30,7 +30,7 @@ mod test {
         );
         assert!(
             output.contains("Failed to run remote benchmarks: Invalid auth token"),
-            "ussal-bencher did not contain expected output, was instead:\n{output}"
+            "ussal-client did not contain expected output, was instead:\n{output}"
         );
 
         runner.shutdown_and_then_consume_events(&[]).await;

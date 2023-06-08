@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "ussal-viewer",
     "ussal-shared",
-    "ussal-bencher",
+    "ussal-client",
     "ussal-server",
     "ussal-networking",
     "run-wasm",

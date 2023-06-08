@@ -53,20 +53,20 @@ jobs:
       id: setup_pages
     - name: Get initial page state
       run: |
-        mkdir -p ussal-bencher/bench_ci_web_root
-        cd ussal-bencher/bench_ci_web_root
+        mkdir -p ussal-client/bench_ci_web_root
+        cd ussal-client/bench_ci_web_root
         # Disable until we have a vaguely stable format
         wget ${{ steps.setup_pages.outputs.base_url }}/bench_history.cbor
       continue-on-error: true
     - name: Run benches
       run: |
-        cd ussal-bencher
+        cd ussal-client
         # The USSAL_TOKEN is unique per user and can be revoked individually
         # We then internally use TLS with letsencrypt to encrypt and authenticate the server.
         cargo run --release -- --auth-token ${{ secrets.USSAL_TOKEN }} --ci
     - name: Upload pages
       uses: actions/upload-pages-artifact@v1
       with:
-        path: 'ussal-bencher/bench_ci_web_root'
+        path: 'ussal-client/bench_ci_web_root'
     - name: Deploy pages
       uses: actions/deploy-pages@v1
