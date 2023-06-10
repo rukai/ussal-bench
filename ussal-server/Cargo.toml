@@ -13,7 +13,7 @@ rustls-acme = { version = "0.7.0", features = ["axum"] }
 tokio-stream = "0.1.12"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
-ussal_shared = { path = "../ussal-shared" }
+ussal-shared = { path = "../ussal-shared" }
 ussal-networking = { path = "../ussal-networking" }
 backtrace = "0.3.67"
 backtrace-ext = "0.2.1"

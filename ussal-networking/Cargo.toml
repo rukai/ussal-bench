@@ -14,5 +14,4 @@ uuid.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 anyhow.workspace = true
-clap.workspace = true
 tokio-tungstenite.workspace = true

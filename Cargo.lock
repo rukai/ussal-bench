@@ -3964,7 +3964,7 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "ussal-networking",
- "ussal_shared",
+ "ussal-shared",
  "uuid",
  "wasm-bindgen-cli-support",
 ]
@@ -3975,7 +3975,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "clap",
  "futures-util",
  "serde",
  "serde_cbor",
@@ -4011,12 +4010,12 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "ussal-networking",
- "ussal_shared",
+ "ussal-shared",
  "uuid",
 ]
 
 [[package]]
-name = "ussal_shared"
+name = "ussal-shared"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -4026,13 +4025,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "ussal_viewer"
+name = "ussal-viewer"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "eframe",
  "tracing-wasm",
- "ussal_shared",
+ "ussal-shared",
  "wasm-bindgen",
  "web-sys",
 ]
