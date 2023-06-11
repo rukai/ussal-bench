@@ -3,3 +3,8 @@ run-wasm = "run --release --package run-wasm --"
 
 [target.aarch64-unknown-linux-gnu]
 linker = "aarch64-linux-gnu-gcc"
+
+[target.aarch64-unknown-linux-musl]
+linker = "aarch64-linux-musl-gcc"
+# if you dont have musl-gcc you could also try this one
+# linker = "aarch64-linux-gnu-gcc"
