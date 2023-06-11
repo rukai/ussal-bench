@@ -1,3 +1,4 @@
+use crate::cli::Args;
 use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -24,17 +25,17 @@ pub struct ConfigRun {
 }
 
 impl Config {
-    fn path() -> PathBuf {
+    fn path(args: &Args) -> PathBuf {
         // TODO: get from crate root
-        PathBuf::from("ussal-config.json")
+        PathBuf::from(args.config_path.as_deref().unwrap_or("ussal.json"))
     }
 
-    pub fn load() -> Result<Self> {
-        let path = Config::path();
+    pub fn load(args: &Args) -> Result<Self> {
+        let path = Config::path(args);
         if path.exists() {
             serde_json::from_slice(&std::fs::read(path)?).map_err(|e| anyhow!(e))
         } else {
-            Err(anyhow!("ussal-config.json not yet setup in crate root."))
+            Err(anyhow!("{path:?} not yet setup in crate root."))
         }
     }
 }

@@ -1081,10 +1081,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be4136b2a15dd319360be1c07d9933517ccf0be8f16bf62a3bee4f0d618df427"
 dependencies = [
  "cfg-if",
- "js-sys",
  "libc",
  "wasi",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -2504,36 +2502,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "ussal_shared"
+name = "ussal-archive"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "getrandom",
  "serde",
  "serde_cbor",
 ]
 
 [[package]]
-name = "ussal_viewer"
+name = "ussal-viewer"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "eframe",
  "tracing-wasm",
- "ussal_shared",
+ "ussal-archive",
  "wasm-bindgen",
  "web-sys",
 ]
 
 [[package]]
-name = "ussal_viewer_web"
+name = "ussal-viewer-web"
 version = "0.1.0"
 dependencies = [
  "eframe",
  "js-sys",
  "tracing-wasm",
- "ussal_shared",
- "ussal_viewer",
+ "ussal-archive",
+ "ussal-viewer",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

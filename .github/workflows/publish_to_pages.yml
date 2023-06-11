@@ -48,6 +48,11 @@ jobs:
         # we also need to add Debug or Release to the key so that a separate cache is used.
         # Otherwise only the last build to finish would get saved to the cache.
         key: ${{ matrix.name }}
+    - name: Install deps
+      run: |
+        wget http://musl.cc/aarch64-linux-musl-cross.tgz
+        tar -xvf aarch64-linux-musl-cross.tgz
+        echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
     - name: Setup Pages
       uses: actions/configure-pages@v2
       id: setup_pages

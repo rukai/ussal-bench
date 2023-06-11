@@ -1,0 +1,11 @@
+{
+    "title": "Test config",
+    "address": "ws://localhost:8000/run_job",
+    "reset_ci_history": 0,
+    "runs": [
+        {
+            "machine_type": "some-machine",
+            "target_triple": "x86_64-unknown-linux-gnu"
+        }
+    ]
+}

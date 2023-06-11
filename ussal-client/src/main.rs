@@ -58,7 +58,7 @@ async fn run() -> i32 {
 
     let args = Args::parse();
 
-    let config = match config::Config::load() {
+    let config = match config::Config::load(&args) {
         Ok(config) => config,
         Err(err) => {
             tracing::error!("Failed to load config: {err:?}");

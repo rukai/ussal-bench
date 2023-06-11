@@ -20,8 +20,8 @@ mod test {
                 "-p",
                 "ussal-client",
                 "--",
-                "--address",
-                "ws://localhost:8000/run_job",
+                "--config-path",
+                "ussal-test.json",
                 "--auth-token",
                 // TOOD: better error reporting for incorrect auth key
                 // TODO: separate test with valid auth key

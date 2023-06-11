@@ -12,7 +12,7 @@ pub fn generate_web() {
 
     run_command_in_dir("cargo", &["build", "--release"], "ussal-viewer-web");
 
-    let wasm_path = "ussal-viewer-web/target/wasm32-unknown-unknown/release/ussal_viewer_web.wasm";
+    let wasm_path = "ussal-viewer-web/target/wasm32-unknown-unknown/release/ussal-viewer-web.wasm";
     let destination_dir = "ussal-viewer-web/target/generated";
     let mut bindgen = wasm_bindgen_cli_support::Bindgen::new();
     bindgen
@@ -23,7 +23,7 @@ pub fn generate_web() {
         .generate(destination_dir)
         .unwrap();
 
-    let wasm_file_name = "ussal_viewer_web_bg.wasm";
+    let wasm_file_name = "ussal-viewer-web_bg.wasm";
     if Exec::cmd("wasm-opt").args(&["--help"]).capture().is_ok() {
         run_command_in_dir(
             "wasm-opt",
@@ -34,13 +34,13 @@ pub fn generate_web() {
         error!("Skipping wasm-opt because not installed")
     }
     std::fs::copy(
-        "ussal-viewer-web/target/generated/ussal_viewer_web_bg.wasm",
-        "bench_ci_web_root/ussal_viewer_web_bg.wasm",
+        "ussal-viewer-web/target/generated/ussal-viewer-web_bg.wasm",
+        "bench_ci_web_root/ussal-viewer-web_bg.wasm",
     )
     .unwrap();
     std::fs::copy(
-        "ussal-viewer-web/target/generated/ussal_viewer_web.js",
-        "bench_ci_web_root/ussal_viewer_web.js",
+        "ussal-viewer-web/target/generated/ussal-viewer-web.js",
+        "bench_ci_web_root/ussal-viewer-web.js",
     )
     .unwrap();
 }
