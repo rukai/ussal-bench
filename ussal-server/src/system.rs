@@ -10,7 +10,8 @@ pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
         .args(args)
         .stdout(Redirection::Pipe)
         .stderr(Redirection::Merge)
-        .capture()?;
+        .capture()
+        .map_err(|e| anyhow!(e).context(format!("Failed to run command {} {:?}", command, args)))?;
 
     if data.exit_status.success() {
         Ok(data.stdout_str())
@@ -40,7 +41,7 @@ pub fn run_sandboxed_binary(command: &str, args: &[&str]) -> Result<String> {
         "-R",
         "/usr/lib",
         "-R",
-        "/lib64",
+        "/lib",
         "-R",
         "/dev/urandom",
         "-R",
