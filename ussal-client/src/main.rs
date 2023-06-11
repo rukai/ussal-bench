@@ -9,7 +9,7 @@ mod run_jobs;
 
 use clap::Parser;
 use cli::Args;
-use ussal_shared::{Bench, BenchArchive, BenchMeasurement};
+use ussal_archive::{Bench, BenchArchive, BenchMeasurement};
 
 /// `cargo bench`
 /// flags:

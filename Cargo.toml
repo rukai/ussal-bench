@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "ussal-viewer",
-    "ussal-shared",
+    "ussal-archive",
     "ussal-client",
     "ussal-server",
     "ussal-networking",

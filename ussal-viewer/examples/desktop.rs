@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 
-use ussal_shared::BenchArchive;
+use ussal_archive::BenchArchive;
 use ussal_viewer::App;
 
 fn main() {

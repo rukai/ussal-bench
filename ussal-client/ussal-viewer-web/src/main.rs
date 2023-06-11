@@ -3,7 +3,7 @@
 
 use eframe::WebRunner;
 use js_sys::Uint8Array;
-use ussal_shared::BenchArchive;
+use ussal_archive::BenchArchive;
 use ussal_viewer::App;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;

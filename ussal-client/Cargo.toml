@@ -7,7 +7,7 @@ default-run = "ussal-client"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ussal-shared = { path = "../ussal-shared" }
+ussal-archive = { path = "../ussal-archive" }
 ussal-networking = { path = "../ussal-networking" }
 wasm-bindgen-cli-support = "0.2.78"
 log = "0.4"

@@ -1,5 +1,5 @@
 [package]
-name = "ussal-shared"
+name = "ussal-archive"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,5 +8,4 @@ edition = "2021"
 [dependencies]
 serde.workspace = true
 serde_cbor.workspace = true
-getrandom = { version = "0.2.9", features = ["js"] }
 anyhow.workspace = true

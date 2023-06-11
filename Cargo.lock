@@ -1659,10 +1659,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be4136b2a15dd319360be1c07d9933517ccf0be8f16bf62a3bee4f0d618df427"
 dependencies = [
  "cfg-if",
- "js-sys",
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -3941,6 +3939,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ussal-archive"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_cbor",
+]
+
+[[package]]
 name = "ussal-client"
 version = "0.1.0"
 dependencies = [
@@ -3963,8 +3970,8 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "url",
+ "ussal-archive",
  "ussal-networking",
- "ussal-shared",
  "uuid",
  "wasm-bindgen-cli-support",
 ]
@@ -4009,19 +4016,9 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "ussal-archive",
  "ussal-networking",
- "ussal-shared",
  "uuid",
-]
-
-[[package]]
-name = "ussal-shared"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "getrandom 0.2.10",
- "serde",
- "serde_cbor",
 ]
 
 [[package]]
@@ -4031,7 +4028,7 @@ dependencies = [
  "console_error_panic_hook",
  "eframe",
  "tracing-wasm",
- "ussal-shared",
+ "ussal-archive",
  "wasm-bindgen",
  "web-sys",
 ]

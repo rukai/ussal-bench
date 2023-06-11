@@ -8,7 +8,7 @@ use eframe::{
     epaint::Color32,
 };
 use egui::plot::{Legend, Plot};
-use ussal_shared::{Bench, BenchArchive};
+use ussal_archive::{Bench, BenchArchive};
 
 struct FilterValue {
     name: String,
