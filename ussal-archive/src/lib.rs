@@ -27,7 +27,7 @@ pub struct Bench {
     pub measurements: Vec<BenchMeasurement>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct BenchMeasurement {
     // TODO: build hash and/or datetime?
     pub value: f32,
@@ -52,13 +52,18 @@ impl BenchArchive {
 
     pub fn insert(&mut self, new_archive: BenchArchive) {
         for new_bench in new_archive.benches {
+            let mut found = false;
             for bench in &mut self.benches {
                 if bench.keys == new_bench.keys && bench.name == new_bench.name {
                     bench
                         .measurements
-                        .extend(new_bench.measurements.into_iter());
+                        .extend(new_bench.measurements.iter().cloned());
+                    found = true;
                     break;
                 }
+            }
+            if !found {
+                self.benches.push(new_bench);
             }
         }
     }
