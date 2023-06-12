@@ -127,6 +127,7 @@ fn plot_bench(
 
     if benches.iter().any(|bench| show_bench(filter_keys, bench)) {
         plot.show(ui, |plot_ui| {
+            let mut legend_i = 0;
             for bench in benches.iter() {
                 if bench.name == name && show_bench(filter_keys, bench) {
                     let line = egui::plot::PlotPoints::new(
@@ -140,13 +141,14 @@ fn plot_bench(
 
                     plot_ui.line(
                         egui::plot::Line::new(line)
-                            .color(egui::Color32::from_rgb(100, 200, 100))
+                            .color(COLORS[legend_i % COLORS.len()])
                             .name(format!(
                                 "{}-{}",
                                 bench.keys.get("machine").unwrap(),
                                 bench.keys.get("type").unwrap(),
                             )),
                     );
+                    legend_i += 1;
                 }
             }
             plot_ui.text(
@@ -172,3 +174,13 @@ fn show_bench(filter_keys: &[FilterKey], bench: &Bench) -> bool {
     }
     true
 }
+
+// TODO: MORE and maybe BETTER colors
+const COLORS: [Color32; 6] = [
+    egui::Color32::from_rgb(100, 200, 100),
+    egui::Color32::from_rgb(100, 100, 200),
+    egui::Color32::from_rgb(200, 100, 100),
+    egui::Color32::from_rgb(000, 100, 100),
+    egui::Color32::from_rgb(100, 000, 100),
+    egui::Color32::from_rgb(100, 100, 000),
+];
