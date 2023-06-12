@@ -23,6 +23,7 @@ struct FilterKey {
 pub struct App {
     archive: BenchArchive,
     filter_keys: Vec<FilterKey>,
+    bench_names: Vec<String>,
 }
 
 impl App {
@@ -48,10 +49,18 @@ impl App {
                 }
             }
         }
+        let mut bench_names = vec![];
+        for bench in &archive.benches {
+            if !bench_names.contains(&bench.name) {
+                bench_names.push(bench.name.clone());
+            }
+        }
+        bench_names.sort();
 
         Self {
             archive,
             filter_keys,
+            bench_names,
         }
     }
 }
@@ -83,8 +92,8 @@ impl eframe::App for App {
             ui.heading(&self.archive.title);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    for (i, result) in self.archive.benches.iter().enumerate() {
-                        plot_bench(ui, result, i as i32, &self.filter_keys);
+                    for (i, name) in self.bench_names.iter().enumerate() {
+                        plot_bench(ui, i as i32, name, &self.archive.benches, &self.filter_keys);
                     }
                 })
             });
@@ -100,15 +109,13 @@ impl eframe::App for App {
     }
 }
 
-fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32, filter_keys: &[FilterKey]) {
-    for (key, value) in &bench.keys {
-        let filter_key = filter_keys.iter().find(|x| &x.name == key).unwrap();
-        let filter_value = filter_key.values.iter().find(|x| &x.name == value).unwrap();
-        if !filter_value.show {
-            return;
-        }
-    }
-
+fn plot_bench(
+    ui: &mut egui::Ui,
+    id: i32,
+    name: &str,
+    benches: &[Bench],
+    filter_keys: &[FilterKey],
+) {
     //ui.vertical(|ui| {
     //ui.label(&bench.name);
 
@@ -118,32 +125,50 @@ fn plot_bench(ui: &mut egui::Ui, bench: &Bench, id: i32, filter_keys: &[FilterKe
         .height(250.0)
         .allow_scroll(false);
 
-    plot.show(ui, |plot_ui| {
-        let line = egui::plot::PlotPoints::new(
-            bench
-                .measurements
-                .iter()
-                .enumerate()
-                .map(|(i, x)| [i as f64, x.value as f64])
-                .collect(),
-        );
-        plot_ui.line(
-            egui::plot::Line::new(line)
-                .color(egui::Color32::from_rgb(100, 200, 100))
-                .name(format!(
-                    "{}-{}",
-                    bench.keys.get("machine").unwrap(),
-                    bench.keys.get("type").unwrap(),
-                )),
-        );
-        plot_ui.text(
-            Text::new(
-                PlotPoint::new(0.0, 0.0),
-                RichText::new(format!(" {}", bench.name)).size(17.0),
-            )
-            .anchor(Align2::LEFT_BOTTOM)
-            .color(Color32::WHITE),
-        );
-    });
+    if benches.iter().any(|bench| show_bench(filter_keys, bench)) {
+        plot.show(ui, |plot_ui| {
+            for bench in benches.iter() {
+                if bench.name == name && show_bench(filter_keys, bench) {
+                    let line = egui::plot::PlotPoints::new(
+                        bench
+                            .measurements
+                            .iter()
+                            .enumerate()
+                            .map(|(i, x)| [i as f64, x.value as f64])
+                            .collect(),
+                    );
+
+                    plot_ui.line(
+                        egui::plot::Line::new(line)
+                            .color(egui::Color32::from_rgb(100, 200, 100))
+                            .name(format!(
+                                "{}-{}",
+                                bench.keys.get("machine").unwrap(),
+                                bench.keys.get("type").unwrap(),
+                            )),
+                    );
+                }
+            }
+            plot_ui.text(
+                Text::new(
+                    PlotPoint::new(0.0, 0.0),
+                    RichText::new(format!(" {}", name)).size(17.0),
+                )
+                .anchor(Align2::LEFT_BOTTOM)
+                .color(Color32::WHITE),
+            );
+        });
+    }
     // });
+}
+
+fn show_bench(filter_keys: &[FilterKey], bench: &Bench) -> bool {
+    for (key, value) in &bench.keys {
+        let filter_key = filter_keys.iter().find(|x| &x.name == key).unwrap();
+        let filter_value = filter_key.values.iter().find(|x| &x.name == value).unwrap();
+        if !filter_value.show {
+            return false;
+        }
+    }
+    true
 }
