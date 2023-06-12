@@ -1,10 +1,25 @@
-# Ussal Benchmarking
+# Ussal Bench
+
+Ussal is a microbenchmarking framework that provides an out of the box way to perform benchmarking in the only way I consider reasonable.
+This includes:
+
+* ussal-bench a benchmark harness that measures both instruction counting and walltime
+  * Instruction counting is the most stable metric available when benchmarking but walltime is also important to remain anchored in reality.
+* ussal-server a service that will run on a cluster of test machines and run benchmarks for you.
+* ussal-client a local client for sending benchmarks compiled from your dev environment to ussal-server
+  * No need to stop using your machine while benchmarks and run.
+  * Create a large cluster of raspberry pis to run your benchmarks concurrently and complete the run in a fraction of the time it takes locally.
+* ussal-client contains CI infrastucture that uses ussal-server to get consistent results.
+  * Keep track of performance history by commit, displayed in graphs.
+  * Detect performance regressions and improvements in PRs
+
+The above list is currently just a wishlist and entirely unimplemented.
 
 ## Platform support
 
 Bencher should run locally on windows, mac and linux.
 
-Server and client support only supports linux and currently only supports running benches compiled with musl.
+Server and client only supports linux and currently only supports running benches compiled with musl.
 In the future we can support glibc via a glibc chroot for nsjail.
 I have no immediate plans for mac or linux support in the server/client but architecturally it is designed to support such OS's
 
