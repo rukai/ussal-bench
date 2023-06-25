@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 
-// TODO: make mode into a subcommand
 #[derive(Subcommand)]
 pub enum Mode {
     Runner {

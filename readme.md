@@ -57,7 +57,7 @@ Maybe we should use alpine linux to host since we dont need glibc?
 
 ### Setup ussal-bench and ussal-client
 
-### run ussal-clinet
+### run ussal-client
 
 Run `cargo ussal-client`
 

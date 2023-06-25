@@ -12,7 +12,7 @@ pub struct Config {
     pub address: String,
     pub runs: Vec<ConfigRun>,
     /// DANGER: Increment this number to force the CI bench history to reset.
-    /// Provided in this strange form to allow reseting state stored in github pages.
+    /// Provided in this strange form to allow resetting state stored in github pages.
     pub reset_ci_history: u32,
 }
 
