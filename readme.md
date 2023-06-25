@@ -1,5 +1,7 @@
 # Ussal Bench
 
+[![dependency status](https://deps.rs/repo/github/rukai/ussal-bench/status.svg)](https://deps.rs/repo/github/rukai/ussal-bench)
+
 Ussal is a microbenchmarking framework that provides an out of the box way to perform benchmarking in the only way I consider reasonable.
 This includes:
 
