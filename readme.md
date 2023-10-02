@@ -65,3 +65,16 @@ Run `cargo ussal-client`
 
 Runners need access to nsjail.
 If your OS doesnt package it, then consider building by following: <https://github.com/google/nsjail/issues/216>
+
+### How does this compare to [bencher.dev](https://bencher.dev)
+
+bencher.dev is a service that will record, compare and analyze benchmark results.
+It does not provide any service for actually running your benchmarks, that must occur either within CI machines or locally.
+
+Ussal on the other hand is a client+server for running benchmarks across a cluster of machines.
+This requires the project to setup the hardware for such a cluster which is quite an investment.
+But does have some advantages (as listed at the top of this readme)
+
+
+But also bencher.dev is a lot more professional and complete, this is just a small hobby project!
+
