@@ -25,7 +25,7 @@ clap.workspace = true
 tokio-tungstenite.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-cargo_metadata = "0.15.4"
+cargo_metadata = "0.18"
 
 [dev-dependencies]
 criterion = { version = "0.5.0", default-features = false }
@@ -33,7 +33,7 @@ glam = "0.24.0"
 serial_test = "2.0.0"
 
 [target.'cfg(unix)'.dev-dependencies]
-tokio-bin-process = { version = "0.1.0", git = "https://github.com/shotover/tokio-bin-process" }
+tokio-bin-process = "0.4.0"
 
 [[bench]]
 name = "glam_mat4"

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 ussal-archive = { path = "../ussal-archive" }
 eframe = "0.22"
+egui_plot = "0.23"
 web-sys = "0.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

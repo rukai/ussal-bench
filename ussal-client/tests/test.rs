@@ -38,7 +38,7 @@ mod test {
 
     async fn ussal_server() -> BinProcess {
         // TODO: run as ussal-server user, probably create a wrapper script that tokio-bin-process runs
-        let mut runner = BinProcess::start_with_args(
+        let mut runner = BinProcess::start_binary_name(
             "ussal-server",
             "server",
             &[
@@ -60,6 +60,7 @@ mod test {
                     .with_level(Level::Info)
                     .with_target("ussal_server")
                     .with_message("Starting HTTP on port: 8000"),
+                &[],
             ),
         )
         .await
