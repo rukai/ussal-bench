@@ -29,7 +29,7 @@ cargo_metadata = "0.18"
 
 [dev-dependencies]
 criterion = { version = "0.5.0", default-features = false }
-glam = "0.24.0"
+glam = "0.25.0"
 serial_test = "2.0.0"
 
 [target.'cfg(unix)'.dev-dependencies]
