@@ -7,6 +7,8 @@ use std::sync::Arc;
 use tokio_stream::StreamExt;
 
 pub async fn acme(args: &OrchestratorArgs) -> AxumAcceptor {
+    // false positive
+    #[allow(clippy::eq_op)]
     let release = env!("PROFILE") == "release";
 
     let mut state = AcmeConfig::new(args.domains.clone())
