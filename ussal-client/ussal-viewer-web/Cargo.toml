@@ -11,24 +11,15 @@ ussal-archive = { path = "../../ussal-archive" }
 ussal-viewer = { path = "../../ussal-viewer" }
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3.55"
-eframe = "0.22"
-# just needed to force enable webgl support for egui
-wgpu = { version = "0.16.0", features = ["webgl"] }
+eframe = "0.24"
 
 [dependencies.web-sys]
 version = "0.3.4"
 features = [
-#   'DomTokenList',
-#   'Headers',
-#   'HtmlCanvasElement',
-#   'HtmlCollection',
-#   'HtmlInputElement',
-#   'HtmlSelectElement',
-   'Request',
+  'Request',
   'RequestInit',
   'RequestMode',
   'Response',
-#   'Window',
 ]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
