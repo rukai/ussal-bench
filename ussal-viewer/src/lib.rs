@@ -1,13 +1,9 @@
 use eframe::{
-    egui::{
-        self,
-        plot::{PlotPoint, Text},
-        RichText,
-    },
+    egui::{self, RichText},
     emath::Align2,
     epaint::Color32,
 };
-use egui::plot::{Legend, Plot};
+use egui_plot::{Legend, Line, Plot, PlotPoint, PlotPoints, Text};
 use ussal_archive::{Bench, BenchArchive};
 
 struct FilterValue {
@@ -118,7 +114,6 @@ fn plot_bench(
 ) {
     //ui.vertical(|ui| {
     //ui.label(&bench.name);
-
     let plot = Plot::new(id)
         .legend(Legend::default())
         .width(500.0)
@@ -126,39 +121,41 @@ fn plot_bench(
         .allow_scroll(false);
 
     if benches.iter().any(|bench| show_bench(filter_keys, bench)) {
-        plot.show(ui, |plot_ui| {
-            let mut legend_i = 0;
-            for bench in benches.iter() {
-                if bench.name == name && show_bench(filter_keys, bench) {
-                    let line = egui::plot::PlotPoints::new(
-                        bench
-                            .measurements
-                            .iter()
-                            .enumerate()
-                            .map(|(i, x)| [i as f64, x.value as f64])
-                            .collect(),
-                    );
+        // TODO: add_sized used to work around https://github.com/emilk/egui/issues/3449
+        ui.add_sized([500.0, 250.0], |ui: &mut egui::Ui| {
+            plot.show(ui, |plot_ui| {
+                let mut legend_i = 0;
+                for bench in benches.iter() {
+                    if bench.name == name && show_bench(filter_keys, bench) {
+                        let line = PlotPoints::new(
+                            bench
+                                .measurements
+                                .iter()
+                                .enumerate()
+                                .map(|(i, x)| [i as f64, x.value as f64])
+                                .collect(),
+                        );
 
-                    plot_ui.line(
-                        egui::plot::Line::new(line)
-                            .color(COLORS[legend_i % COLORS.len()])
-                            .name(format!(
+                        plot_ui.line(Line::new(line).color(COLORS[legend_i % COLORS.len()]).name(
+                            format!(
                                 "{}-{}",
                                 bench.keys.get("machine").unwrap(),
                                 bench.keys.get("type").unwrap(),
-                            )),
-                    );
-                    legend_i += 1;
+                            ),
+                        ));
+                        legend_i += 1;
+                    }
                 }
-            }
-            plot_ui.text(
-                Text::new(
-                    PlotPoint::new(0.0, 0.0),
-                    RichText::new(format!(" {}", name)).size(17.0),
-                )
-                .anchor(Align2::LEFT_BOTTOM)
-                .color(Color32::WHITE),
-            );
+                plot_ui.text(
+                    Text::new(
+                        PlotPoint::new(0.0, 0.0),
+                        RichText::new(format!(" {}", name)).size(17.0),
+                    )
+                    .anchor(Align2::LEFT_BOTTOM)
+                    .color(Color32::WHITE),
+                );
+            })
+            .response
         });
     }
     // });
