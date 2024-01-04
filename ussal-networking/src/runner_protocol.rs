@@ -23,9 +23,14 @@ pub struct JobResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum JobResponseType {
-    Handshake { machine_type: String },
+    Handshake {
+        machine_type: String,
+    },
     RunBench(BenchComplete),
-    ListBenches(Vec<String>),
+    ListBenches {
+        bench_names: Vec<String>,
+        bencher: BencherCrate,
+    },
     Error(String),
 }
 
@@ -33,7 +38,9 @@ impl JobResponseType {
     pub fn get_run_bench(&self) -> Result<&BenchComplete, String> {
         match self {
             JobResponseType::RunBench(x) => Ok(x),
-            JobResponseType::ListBenches(_) => Err("Unexpected response ListBenches".to_owned()),
+            JobResponseType::ListBenches { .. } => {
+                Err("Unexpected response ListBenches".to_owned())
+            }
             JobResponseType::Handshake { .. } => Err("Unexpected handshake".to_owned()),
             JobResponseType::Error(err) => Err(err.clone()),
         }
@@ -41,7 +48,7 @@ impl JobResponseType {
 
     pub fn get_list_benches(&self) -> Result<&Vec<String>, String> {
         match self {
-            JobResponseType::ListBenches(benches) => Ok(benches),
+            JobResponseType::ListBenches { bench_names, .. } => Ok(bench_names),
             JobResponseType::RunBench(_) => Err("Unexpected response RunBench".to_owned()),
             JobResponseType::Handshake { .. } => Err("Unexpected handshake".to_owned()),
             JobResponseType::Error(err) => Err(err.clone()),
@@ -52,4 +59,10 @@ impl JobResponseType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BenchComplete {
     pub wall_time: f32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum BencherCrate {
+    Criterion,
+    Divan,
 }
