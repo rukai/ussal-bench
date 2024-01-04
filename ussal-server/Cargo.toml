@@ -6,10 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum-server = "0.5.1"
+axum-server = "0.6.0"
 dirs-next = "2.0.0"
 futures = "0.3.28"
-rustls-acme = { version = "0.7.0", features = ["axum"] }
+#rustls-acme = { version = "0.8.0", features = ["axum"] }
+# Using fork with support for axum 0.6
+rustls-acme = { version = "0.8.0", features = ["axum"], git = "https://github.com/10ne1/rustls-acme", branch = "main" }
 tokio-stream = "0.1.12"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }

@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.dependencies]
-axum = { version = "0.6.0", features = ["ws"] }
+axum = { version = "0.7.0", features = ["ws"] }
 serde = { version = "1.0.160", features = ["derive"] }
 clap = { version = "4.2.2", features = ["derive"] }
 tokio-tungstenite = { version = "0.19.0", features = ["rustls-tls-webpki-roots"] }
