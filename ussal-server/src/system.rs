@@ -1,4 +1,4 @@
-use crate::cli::LogFormat;
+use crate::cli::{LogFormat, SandboxMode};
 use anyhow::{anyhow, Result};
 use subprocess::{Exec, Redirection};
 use tracing_appender::non_blocking::WorkerGuard;
@@ -28,29 +28,38 @@ pub fn run_command(command: &str, args: &[&str]) -> Result<String> {
 
 /// Runs a binary in an nsjail and returns the output as a string.
 /// Both stderr and stdout are returned in the result.
-pub fn run_sandboxed_binary(command: &str, args: &[&str]) -> Result<String> {
-    let mut nsjail_args = vec![
-        "--really_quiet",
-        "--mode",
-        "o",
-        "--user",
-        "99999",
-        "--group",
-        "99999",
-        "--keep_caps",
-        "-R",
-        "/usr/lib",
-        "-R",
-        "/lib",
-        "-R",
-        "/dev/urandom",
-        "-R",
-        "/home/ussal-server/binary-under-test",
-        "--",
-        command,
-    ];
-    nsjail_args.extend(args);
-    run_command("nsjail", &nsjail_args)
+pub fn run_sandboxed_binary(
+    sandbox_mode: SandboxMode,
+    command: &str,
+    args: &[&str],
+) -> Result<String> {
+    match sandbox_mode {
+        SandboxMode::NsjailComplete => {
+            let mut nsjail_args = vec![
+                "--really_quiet",
+                "--mode",
+                "o",
+                "--user",
+                "99999",
+                "--group",
+                "99999",
+                "--keep_caps",
+                "-R",
+                "/usr/lib",
+                "-R",
+                "/lib",
+                "-R",
+                "/dev/urandom",
+                "-R",
+                command,
+                "--",
+                command,
+            ];
+            nsjail_args.extend(args);
+            run_command("nsjail", &nsjail_args)
+        }
+        SandboxMode::None => run_command(command, args),
+    }
 }
 
 pub fn init_tracing(format: LogFormat) -> WorkerGuard {

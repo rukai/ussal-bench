@@ -55,6 +55,10 @@ pub enum Mode {
         #[clap(long)]
         disable_https: bool,
     },
+    /// Install or reinstall the ussal runner to this machine.
+    ///
+    /// Ussal is setup as an enabled and started systemd unit named `ussal-server`.
+    /// Existing ussal config and letsencrypt state is retained.
     DestructivelyInstallRunner {
         /// Domains used in the letsencrypt certificate
         #[clap(long, required = true)]
@@ -110,12 +114,36 @@ pub struct Args {
     #[command(subcommand)]
     pub mode: Mode,
 
-    #[clap(long, value_enum, default_value = "human")]
+    #[clap(long, value_enum, default_value = "human", verbatim_doc_comment)]
     pub log_format: LogFormat,
+
+    /// Path to the ussal config directory.
+    /// By default reads from `~/.config/UssalRunner/` where `~` is likely `/home/ussal-server`.
+    #[clap(long, verbatim_doc_comment)]
+    pub config_path: Option<String>,
+
+    /// Level of sandboxing to use when running bench executables
+    #[clap(
+        long,
+        value_enum,
+        default_value = "nsjail-complete",
+        verbatim_doc_comment
+    )]
+    // TODO: should this be part of the config file instead?
+    pub sandbox_mode: SandboxMode,
 }
 
 #[derive(clap::ValueEnum, Clone, Copy)]
 pub enum LogFormat {
     Human,
     Json,
+}
+
+#[derive(clap::ValueEnum, Clone, Copy)]
+pub enum SandboxMode {
+    /// Complete nsjail sandboxing.
+    /// Only the most basic syscalls for program execution are allowed. Things like networking and disk are inaccessible.
+    NsjailComplete,
+    /// Never expose this to the internet
+    None,
 }

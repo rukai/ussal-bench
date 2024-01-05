@@ -1,9 +1,11 @@
 use anyhow::{anyhow, Context, Result};
 use notify::{Config, RecommendedWatcher, Watcher};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::sync::watch::{channel, Receiver, Ref};
 use uuid::Uuid;
+
+use crate::cli::Args;
 
 pub struct ReloadableOrchestratorConfig {
     pub config: Receiver<OrchestratorConfig>,
@@ -11,28 +13,29 @@ pub struct ReloadableOrchestratorConfig {
 }
 
 impl ReloadableOrchestratorConfig {
-    pub fn load() -> Self {
+    pub fn load(args: &Args) -> Self {
+        let path = OrchestratorConfig::path(args);
         let (tx, config) = channel(
-            OrchestratorConfig::load()
-                .context(format!("Failed to load {:?}", OrchestratorConfig::path()))
+            OrchestratorConfig::load(&path)
+                .context(format!("Failed to load {:?}", path))
                 .unwrap(),
         );
-
+        let path_clone = path.clone();
         let mut watcher = RecommendedWatcher::new(
-            move |_| match OrchestratorConfig::load() {
+            move |_| match OrchestratorConfig::load(&path_clone) {
                 Ok(x) => {
-                    tracing::info!("Succesfully reloaded {:?}", OrchestratorConfig::path());
+                    tracing::info!("Succesfully reloaded {:?}", path_clone);
                     tx.send(x).unwrap();
                 }
                 Err(err) => {
-                    tracing::error!("Failed to reload {:?}: {err:?}", OrchestratorConfig::path())
+                    tracing::error!("Failed to reload {:?}: {err:?}", path_clone)
                 }
             },
             Config::default(),
         )
         .unwrap();
         watcher
-            .watch(&config_path(), notify::RecursiveMode::Recursive)
+            .watch(&path, notify::RecursiveMode::Recursive)
             .unwrap();
 
         ReloadableOrchestratorConfig {
@@ -52,32 +55,33 @@ pub struct OrchestratorConfig {
 }
 
 impl OrchestratorConfig {
-    fn path() -> PathBuf {
-        config_path().join("config.json")
+    fn path(args: &Args) -> PathBuf {
+        match &args.config_path {
+            Some(config_path) => Path::new(config_path).join("config.json"),
+            None => default_config_path().join("config.json"),
+        }
     }
 
-    pub fn load() -> Result<Self> {
-        let path = OrchestratorConfig::path();
+    pub fn load(path: &Path) -> Result<Self> {
         if path.exists() {
             serde_json::from_slice(&std::fs::read(path)?).map_err(|e| anyhow!(e))
         } else {
             let config = OrchestratorConfig {
                 tokens: vec![Uuid::new_v4()],
             };
-            config.save();
+            config.save(path);
             Ok(config)
         }
     }
 
-    fn save(&self) {
-        let path = OrchestratorConfig::path();
+    fn save(&self, path: &Path) {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, serde_json::to_vec(self).unwrap())
+        std::fs::write(path, serde_json::to_vec(self).unwrap())
             .map_err(|e| anyhow::anyhow!("Failed to write to {path:?} {e}"))
             .unwrap();
     }
 }
 
-pub fn config_path() -> PathBuf {
+pub fn default_config_path() -> PathBuf {
     dirs_next::config_dir().unwrap().join("UssalRunner")
 }

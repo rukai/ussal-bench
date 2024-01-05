@@ -23,9 +23,7 @@ mod test {
                 "--config-path",
                 "ussal-test.json",
                 "--auth-token",
-                // TOOD: better error reporting for incorrect auth key
-                // TODO: separate test with valid auth key
-                "2d58efc6-6c95-47c5-968d-55aa923b4cc9",
+                "deaddead-dead-dead-dead-deaddeaddead",
             ],
         );
         assert!(
@@ -36,14 +34,45 @@ mod test {
         runner.shutdown_and_then_consume_events(&[]).await;
     }
 
+    #[tokio::test(flavor = "multi_thread")]
+    #[serial]
+    async fn test_success() {
+        let runner = ussal_server().await;
+
+        let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
+        let output = run_command(
+            &cargo,
+            &[
+                "run",
+                "-p",
+                "ussal-client",
+                "--",
+                "--config-path",
+                "ussal-test.json",
+                "--auth-token",
+                "2d58efc6-6c95-47c5-968d-55aa923b4cc9",
+            ],
+        );
+        assert!(
+            // TODO: improve the output of the client and then assert on it
+            output.contains("BenchComplete { bench_name:"),
+            "ussal-client did not contain expected output, was instead:\n{output}"
+        );
+
+        runner.shutdown_and_then_consume_events(&[]).await;
+    }
+
     async fn ussal_server() -> BinProcess {
-        // TODO: run as ussal-server user, probably create a wrapper script that tokio-bin-process runs
         let mut runner = BinProcess::start_binary_name(
             "ussal-server",
             "server",
             &[
                 "--log-format",
                 "json",
+                "--config-path",
+                "tests/server-config",
+                "--sandbox-mode",
+                "none",
                 "orchestrator-and-runner",
                 "--disable-https",
                 "--domains",
@@ -70,7 +99,6 @@ mod test {
 
     /// Runs a command and returns the output as a string.
     /// Both stderr and stdout are returned in the result.
-    #[allow(dead_code)]
     fn run_command(command: &str, args: &[&str]) -> String {
         let data = Exec::cmd(command)
             .args(args)

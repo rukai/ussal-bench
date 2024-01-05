@@ -1,4 +1,7 @@
-use crate::system::{run_command, run_sandboxed_binary};
+use crate::{
+    cli::SandboxMode,
+    system::{run_command, run_sandboxed_binary},
+};
 use anyhow::{anyhow, Result};
 use std::time::Duration;
 use tokio::net::TcpStream;
@@ -9,7 +12,7 @@ use ussal_networking::runner_protocol::{
 };
 use uuid::Uuid;
 
-pub async fn runner(address: &str, machine_type: &str) {
+pub async fn runner(sandbox_mode: SandboxMode, address: &str, machine_type: &str) {
     loop {
         let stream = match connect(address).await {
             Ok(stream) => stream,
@@ -33,7 +36,7 @@ pub async fn runner(address: &str, machine_type: &str) {
         .unwrap();
         if let Some(request) = rx.recv().await {
             tracing::info!("running job: {} {:?}", request.job_id, request.ty);
-            let response = run_job_request(&request);
+            let response = run_job_request(sandbox_mode, &request);
             tx.send(response).unwrap();
         } else {
             tracing::error!("Connection was killed, retrying in 60s");
@@ -50,21 +53,19 @@ async fn connect(uri: &str) -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>
     Ok(ws_stream)
 }
 
-pub fn run_job_request(request: &JobRequest) -> JobResponse {
-    // TODO: write binary to tmpfs and run as ussal-sandbox
-    let binary_path = "/home/ussal-server/binary-under-test";
-    std::fs::remove_file(binary_path).ok();
-    std::fs::write(binary_path, &request.binary).unwrap();
+pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobResponse {
+    // TODO: run as ussal-sandbox
+    let binary_path = std::env::temp_dir().join("binary-under-test");
+    std::fs::remove_file(&binary_path).ok();
+    std::fs::write(&binary_path, &request.binary).unwrap();
+    let binary_path = binary_path.to_str().unwrap();
     run_command("chmod", &["+x", binary_path]).unwrap();
 
     match &request.ty {
         JobRequestType::ListBenches => {
             // `cargo bench` automatically adds in the `--bench`
-            let output = run_sandboxed_binary(
-                "/home/ussal-server/binary-under-test",
-                &["--bench", "--list"],
-            )
-            .unwrap();
+            let output =
+                run_sandboxed_binary(sandbox_mode, binary_path, &["--bench", "--list"]).unwrap();
 
             let benches: Vec<String> = output
                 .lines()
@@ -77,7 +78,8 @@ pub fn run_job_request(request: &JobRequest) -> JobResponse {
         }
         JobRequestType::RunBench { bench_name } => {
             let output = run_sandboxed_binary(
-                "/home/ussal-server/binary-under-test",
+                sandbox_mode,
+                binary_path,
                 &[
                     "--bench",
                     "--exact",
