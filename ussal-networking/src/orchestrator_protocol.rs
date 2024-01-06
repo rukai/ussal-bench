@@ -7,6 +7,7 @@ pub struct JobRequest {
     pub auth_token: Uuid,
     pub job_id: Uuid,
     pub binary: Vec<u8>,
+    pub bencher_crate: BencherCrate,
     pub machine_type: String,
 }
 
@@ -34,4 +35,10 @@ pub struct BenchComplete {
     pub bench_name: String,
     pub wall_time: f32,
     pub keys: HashMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum BencherCrate {
+    Criterion,
+    Divan,
 }

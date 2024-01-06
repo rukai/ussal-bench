@@ -10,6 +10,7 @@ pub struct Config {
     pub title: String,
     /// The ussal orchestrator websocket endpoint
     pub address: String,
+    pub benches: Vec<BenchConfig>,
     pub runs: Vec<ConfigRun>,
     /// DANGER: Increment this number to force the CI bench history to reset.
     /// Provided in this strange form to allow resetting state stored in github pages.
@@ -38,4 +39,16 @@ impl Config {
             Err(anyhow!("{path:?} not yet setup in crate root."))
         }
     }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BenchConfig {
+    pub name: String,
+    pub framework: BenchFramework,
+}
+
+#[derive(Deserialize, Debug)]
+pub enum BenchFramework {
+    Criterion,
+    Divan,
 }

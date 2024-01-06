@@ -10,8 +10,12 @@ pub struct JobRequest {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum JobRequestType {
-    RunBench { bench_name: String },
-    ListBenches,
+    RunBenchCriterion {
+        bench_name: String,
+    },
+    ListBenchesCriterion,
+    /// Divan benches run instantly so no point in splitting results across the cluster like we do with criterion
+    RunBenchesDivan,
 }
 
 /// One JobResponse will be sent per JobRequest
@@ -23,14 +27,9 @@ pub struct JobResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum JobResponseType {
-    Handshake {
-        machine_type: String,
-    },
+    Handshake { machine_type: String },
     RunBench(BenchComplete),
-    ListBenches {
-        bench_names: Vec<String>,
-        bencher: BencherCrate,
-    },
+    ListBenches { bench_names: Vec<String> },
     Error(String),
 }
 
@@ -59,10 +58,4 @@ impl JobResponseType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BenchComplete {
     pub wall_time: f32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum BencherCrate {
-    Criterion,
-    Divan,
 }

@@ -5,7 +5,7 @@ use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use ussal_networking::runner_protocol::{
-    BenchComplete, BencherCrate, JobRequest, JobRequestType, JobResponse, JobResponseType,
+    BenchComplete, JobRequest, JobRequestType, JobResponse, JobResponseType,
 };
 use uuid::Uuid;
 
@@ -65,36 +65,21 @@ pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobRe
     let binary_path = binary_path.to_str().unwrap();
 
     match &request.ty {
-        JobRequestType::ListBenches => {
+        JobRequestType::ListBenchesCriterion => {
             // `cargo bench` automatically adds in the `--bench`
             let output =
                 run_sandboxed_binary(sandbox_mode, binary_path, &["--bench", "--list"]).unwrap();
 
-            let bencher = if output.contains("├─") {
-                BencherCrate::Divan
-            } else {
-                BencherCrate::Criterion
-            };
-
-            let bench_names: Vec<String> = match bencher {
-                BencherCrate::Criterion => output
-                    .lines()
-                    .filter_map(|line| line.strip_suffix(": benchmark").map(|x| x.to_owned()))
-                    .collect(),
-                BencherCrate::Divan => output
-                    .lines()
-                    .filter_map(|line| line.strip_prefix("├─ ").map(|x| x.to_owned()))
-                    .collect(),
-            };
+            let bench_names: Vec<String> = output
+                .lines()
+                .filter_map(|line| line.strip_suffix(": benchmark").map(|x| x.to_owned()))
+                .collect();
             JobResponse {
                 job_id: request.job_id,
-                ty: JobResponseType::ListBenches {
-                    bench_names,
-                    bencher,
-                },
+                ty: JobResponseType::ListBenches { bench_names },
             }
         }
-        JobRequestType::RunBench { bench_name } => {
+        JobRequestType::RunBenchCriterion { bench_name } => {
             let output = run_sandboxed_binary(
                 sandbox_mode,
                 binary_path,
@@ -108,7 +93,6 @@ pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobRe
             )
             .unwrap();
 
-            // TODO: parse divan output
             let mut wall_time: Option<f32> = None;
             // This logic is so brittle, but we plan to replace criterion later anyway.
             for line in output.lines() {
@@ -134,6 +118,9 @@ pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobRe
                 job_id: request.job_id,
                 ty: JobResponseType::RunBench(BenchComplete { wall_time }),
             }
+        }
+        JobRequestType::RunBenchesDivan => {
+            todo!("implement divan support")
         }
     }
 }
