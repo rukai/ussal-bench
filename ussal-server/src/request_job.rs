@@ -39,7 +39,7 @@ async fn run_websocket(stream: WebSocket, state: Arc<AppState>) {
                 })
                 .unwrap();
         }
-        crate::job_handler::HandlerState::OrchestratorAndRunner(_) => {
+        crate::job_handler::HandlerState::OrchestratorAndRunner { .. } => {
             panic!("external runners are not supported on OrchestratorAndRunner")
         }
     }

@@ -5,11 +5,11 @@
 Ussal is a microbenchmarking framework that provides an out of the box way to perform benchmarking in the only way I consider reasonable.
 This includes:
 
-* ussal-bench a benchmark harness that measures both instruction counting and walltime
+* ussal-bench a benchmark harness that measures both instruction count and walltime
   * Instruction counting is the most stable metric available when benchmarking but walltime is also important to remain anchored in reality.
 * ussal-server a service that will run on a cluster of test machines and run benchmarks for you.
 * ussal-client a local client for sending benchmarks compiled from your dev environment to ussal-server
-  * No need to stop using your machine while benchmarks and run.
+  * No need to stop using your machine while benchmarks are running.
   * Create a large cluster of raspberry pis to run your benchmarks concurrently and complete the run in a fraction of the time it takes locally.
 * ussal-client contains CI infrastucture that uses ussal-server to get consistent results.
   * Keep track of performance history by commit, displayed in graphs.
@@ -75,6 +75,4 @@ Ussal on the other hand is a client+server for running benchmarks across a clust
 This requires the project to setup the hardware for such a cluster which is quite an investment.
 But does have some advantages (as listed at the top of this readme)
 
-
 But also bencher.dev is a lot more professional and complete, this is just a small hobby project!
-

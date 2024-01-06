@@ -13,7 +13,7 @@ pub async fn acme(args: &OrchestratorArgs) -> AxumAcceptor {
 
     let mut state = AcmeConfig::new(args.domains.clone())
         .cache_option(Some(DirCache::new(
-            crate::config::config_path().join("acme_cache"),
+            crate::config::default_config_path().join("acme_cache"),
         )))
         .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
         .directory_lets_encrypt(release)

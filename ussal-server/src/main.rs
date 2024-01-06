@@ -39,7 +39,7 @@ async fn run(args: Args) {
         Mode::Runner {
             address,
             machine_type,
-        } => runner::runner(address, machine_type).await,
+        } => runner::runner(args.sandbox_mode, address, machine_type).await,
         Mode::Orchestrator { .. } => orchestrator(args, false).await,
         Mode::OrchestratorAndRunner { .. } => orchestrator(args, true).await,
         Mode::DestructivelyInstallRunner { .. } => install::install_runner(args),
@@ -47,18 +47,22 @@ async fn run(args: Args) {
 }
 
 async fn orchestrator(args: Args, runner: bool) {
+    let handler = if runner {
+        HandlerState::OrchestratorAndRunner {
+            semaphore: Semaphore::new(1),
+            sandbox_mode: args.sandbox_mode,
+        }
+    } else {
+        let (request_tx, request_rx) = unbounded_channel();
+        let (connection_tx, connection_rx) = unbounded_channel();
+        tokio::spawn(connection_assigner::task(request_rx, connection_rx));
+        HandlerState::Orchestrator(OrchestratorState::new(request_tx, connection_tx))
+    };
     let app = Router::new()
         .route("/", get(status_page::show_status))
         .route("/request_job", get(request_job::request_job))
         .route("/run_job", get(job_handler::run_job))
-        .with_state(Arc::new(AppState::new(if runner {
-            HandlerState::OrchestratorAndRunner(Semaphore::new(1))
-        } else {
-            let (request_tx, request_rx) = unbounded_channel();
-            let (connection_tx, connection_rx) = unbounded_channel();
-            tokio::spawn(connection_assigner::task(request_rx, connection_rx));
-            HandlerState::Orchestrator(OrchestratorState::new(request_tx, connection_tx))
-        })));
+        .with_state(Arc::new(AppState::new(&args, handler)));
 
     let args = args.mode.orchestrator_args();
 
@@ -89,10 +93,10 @@ pub struct AppState {
 }
 
 impl AppState {
-    fn new(handler: HandlerState) -> Self {
+    fn new(args: &Args, handler: HandlerState) -> Self {
         AppState {
             handler,
-            config: ReloadableOrchestratorConfig::load(),
+            config: ReloadableOrchestratorConfig::load(args),
         }
     }
 }

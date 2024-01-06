@@ -1,3 +1,4 @@
+use crate::cli::SandboxMode;
 use crate::connection_assigner::{Connection, Request};
 use crate::AppState;
 use axum::extract::ws::WebSocket;
@@ -104,7 +105,10 @@ async fn process_request(
 pub enum HandlerState {
     #[allow(dead_code)]
     Orchestrator(OrchestratorState),
-    OrchestratorAndRunner(Semaphore),
+    OrchestratorAndRunner {
+        semaphore: Semaphore,
+        sandbox_mode: SandboxMode,
+    },
 }
 
 impl HandlerState {
@@ -127,11 +131,17 @@ impl HandlerState {
                     }
                 }
             },
-            HandlerState::OrchestratorAndRunner(semaphore) => {
+            HandlerState::OrchestratorAndRunner {
+                sandbox_mode,
+                semaphore,
+            } => {
                 let _permit = semaphore.acquire().await.unwrap();
-                tokio::task::spawn_blocking(move || crate::runner::run_job_request(&request))
-                    .await
-                    .unwrap()
+                let sandbox_mode = *sandbox_mode;
+                tokio::task::spawn_blocking(move || {
+                    crate::runner::run_job_request(sandbox_mode, &request)
+                })
+                .await
+                .unwrap()
             }
         }
     }
