@@ -1,7 +1,4 @@
-use crate::{
-    cli::SandboxMode,
-    system::{run_command, run_sandboxed_binary},
-};
+use crate::{cli::SandboxMode, system::run_sandboxed_binary};
 use anyhow::{anyhow, Result};
 use std::time::Duration;
 use tokio::net::TcpStream;
@@ -58,8 +55,14 @@ pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobRe
     let binary_path = std::env::temp_dir().join("binary-under-test");
     std::fs::remove_file(&binary_path).ok();
     std::fs::write(&binary_path, &request.binary).unwrap();
+    #[cfg(unix)]
+    std::fs::set_permissions(
+        &binary_path,
+        std::os::unix::fs::PermissionsExt::from_mode(0o100),
+    )
+    .unwrap();
+
     let binary_path = binary_path.to_str().unwrap();
-    run_command("chmod", &["+x", binary_path]).unwrap();
 
     match &request.ty {
         JobRequestType::ListBenches => {
