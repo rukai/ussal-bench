@@ -54,7 +54,7 @@ async fn process_request(
     let list_request = runner_proto::JobRequest {
         job_id: request.job_id,
         binary: request.binary.clone(),
-        ty: runner_proto::JobRequestType::ListBenches,
+        ty: runner_proto::JobRequestType::ListBenchesCriterion,
     };
     let job_response = state
         .handler
@@ -69,7 +69,7 @@ async fn process_request(
             let request = runner_proto::JobRequest {
                 job_id: request.job_id,
                 binary: request.binary.clone(),
-                ty: runner_proto::JobRequestType::RunBench {
+                ty: runner_proto::JobRequestType::RunBenchCriterion {
                     bench_name: bench.clone(),
                 },
             };

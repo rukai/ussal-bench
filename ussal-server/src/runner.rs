@@ -65,21 +65,21 @@ pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobRe
     let binary_path = binary_path.to_str().unwrap();
 
     match &request.ty {
-        JobRequestType::ListBenches => {
+        JobRequestType::ListBenchesCriterion => {
             // `cargo bench` automatically adds in the `--bench`
             let output =
                 run_sandboxed_binary(sandbox_mode, binary_path, &["--bench", "--list"]).unwrap();
 
-            let benches: Vec<String> = output
+            let bench_names: Vec<String> = output
                 .lines()
                 .filter_map(|line| line.strip_suffix(": benchmark").map(|x| x.to_owned()))
                 .collect();
             JobResponse {
                 job_id: request.job_id,
-                ty: JobResponseType::ListBenches(benches),
+                ty: JobResponseType::ListBenches { bench_names },
             }
         }
-        JobRequestType::RunBench { bench_name } => {
+        JobRequestType::RunBenchCriterion { bench_name } => {
             let output = run_sandboxed_binary(
                 sandbox_mode,
                 binary_path,
@@ -118,6 +118,9 @@ pub fn run_job_request(sandbox_mode: SandboxMode, request: &JobRequest) -> JobRe
                 job_id: request.job_id,
                 ty: JobResponseType::RunBench(BenchComplete { wall_time }),
             }
+        }
+        JobRequestType::RunBenchesDivan => {
+            todo!("implement divan support")
         }
     }
 }

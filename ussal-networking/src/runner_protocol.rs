@@ -10,8 +10,12 @@ pub struct JobRequest {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum JobRequestType {
-    RunBench { bench_name: String },
-    ListBenches,
+    RunBenchCriterion {
+        bench_name: String,
+    },
+    ListBenchesCriterion,
+    /// Divan benches run instantly so no point in splitting results across the cluster like we do with criterion
+    RunBenchesDivan,
 }
 
 /// One JobResponse will be sent per JobRequest
@@ -25,7 +29,7 @@ pub struct JobResponse {
 pub enum JobResponseType {
     Handshake { machine_type: String },
     RunBench(BenchComplete),
-    ListBenches(Vec<String>),
+    ListBenches { bench_names: Vec<String> },
     Error(String),
 }
 
@@ -33,7 +37,9 @@ impl JobResponseType {
     pub fn get_run_bench(&self) -> Result<&BenchComplete, String> {
         match self {
             JobResponseType::RunBench(x) => Ok(x),
-            JobResponseType::ListBenches(_) => Err("Unexpected response ListBenches".to_owned()),
+            JobResponseType::ListBenches { .. } => {
+                Err("Unexpected response ListBenches".to_owned())
+            }
             JobResponseType::Handshake { .. } => Err("Unexpected handshake".to_owned()),
             JobResponseType::Error(err) => Err(err.clone()),
         }
@@ -41,7 +47,7 @@ impl JobResponseType {
 
     pub fn get_list_benches(&self) -> Result<&Vec<String>, String> {
         match self {
-            JobResponseType::ListBenches(benches) => Ok(benches),
+            JobResponseType::ListBenches { bench_names, .. } => Ok(bench_names),
             JobResponseType::RunBench(_) => Err("Unexpected response RunBench".to_owned()),
             JobResponseType::Handshake { .. } => Err("Unexpected handshake".to_owned()),
             JobResponseType::Error(err) => Err(err.clone()),

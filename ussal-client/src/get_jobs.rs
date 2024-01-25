@@ -1,8 +1,11 @@
-use crate::{cli::Args, config::Config};
+use crate::{
+    cli::Args,
+    config::{BenchFramework, Config},
+};
 use anyhow::{anyhow, Result};
 use cargo_metadata::{Message, MetadataCommand};
 use std::process::{Command, Stdio};
-use ussal_networking::orchestrator_protocol::JobRequest;
+use ussal_networking::orchestrator_protocol::{BencherCrate, JobRequest};
 use uuid::Uuid;
 
 pub fn get_jobs(args: &Args, config: &Config) -> Result<Vec<JobRequest>> {
@@ -42,12 +45,21 @@ pub fn get_jobs(args: &Args, config: &Config) -> Result<Vec<JobRequest>> {
             if let Message::CompilerArtifact(artifact) = message.unwrap() {
                 if artifact.target.is_bench() {
                     if let Some(binary) = artifact.executable {
-                        jobs.push(JobRequest {
-                            auth_token: args.auth_token,
-                            job_id: Uuid::new_v4(),
-                            binary: std::fs::read(binary)?,
-                            machine_type: run.machine_type.clone(),
-                        })
+                        let bench_name = binary.as_str().rsplit_once('-').unwrap().0;
+                        if let Some(bench) = config.benches.iter().find(|x| x.name == bench_name) {
+                            jobs.push(JobRequest {
+                                bencher_crate: match bench.framework {
+                                    BenchFramework::Criterion => BencherCrate::Criterion,
+                                    BenchFramework::Divan => BencherCrate::Divan,
+                                },
+                                auth_token: args.auth_token,
+                                job_id: Uuid::new_v4(),
+                                binary: std::fs::read(binary)?,
+                                machine_type: run.machine_type.clone(),
+                            })
+                        } else {
+                            tracing::error!("No entry for bench {:?}, you should add an entry for it. If you dont want to run it in ussal set `framework` to `Skip`", artifact.filenames)
+                        }
                     }
                 }
             }

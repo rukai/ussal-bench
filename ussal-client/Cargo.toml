@@ -29,6 +29,7 @@ cargo_metadata = "0.18"
 
 [dev-dependencies]
 criterion = { version = "0.5.0", default-features = false }
+divan = "0.1.8"
 glam = "0.25.0"
 serial_test = "3.0.0"
 
@@ -36,5 +37,9 @@ serial_test = "3.0.0"
 tokio-bin-process = "0.4.0"
 
 [[bench]]
-name = "glam_mat4"
+name = "criterion_glam_mat4"
+harness = false
+
+[[bench]]
+name = "divan_glam_mat4"
 harness = false

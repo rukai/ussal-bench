@@ -2,6 +2,17 @@
     "title": "Test config",
     "address": "ws://localhost:8000/run_job",
     "reset_ci_history": 0,
+    "bench_framework": "divan",
+    "benches": [
+        {
+            "name": "criterion_glam_mat4",
+            "framework": "criterion"
+        },
+        {
+            "name": "divan_glam_mat4",
+            "framework": "divan"
+        }
+    ],
     "runs": [
         {
             "machine_type": "some-machine",
