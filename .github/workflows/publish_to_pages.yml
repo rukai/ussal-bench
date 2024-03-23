@@ -40,7 +40,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
       with:
         # rust-cache already handles all the sane defaults for caching rust builds.
@@ -54,7 +54,7 @@ jobs:
         tar -xvf aarch64-linux-musl-cross.tgz
         echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
     - name: Setup Pages
-      uses: actions/configure-pages@v2
+      uses: actions/configure-pages@v4
       id: setup_pages
     - name: Get initial page state
       run: |
@@ -70,8 +70,8 @@ jobs:
         # We then internally use TLS with letsencrypt to encrypt and authenticate the server.
         cargo run --release -- --auth-token ${{ secrets.USSAL_TOKEN }} --ci
     - name: Upload pages
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v3
       with:
         path: 'ussal-client/bench_ci_web_root'
     - name: Deploy pages
-      uses: actions/deploy-pages@v1
+      uses: actions/deploy-pages@v4

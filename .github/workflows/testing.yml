@@ -40,7 +40,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
       with:
         # rust-cache already handles all the sane defaults for caching rust builds.
